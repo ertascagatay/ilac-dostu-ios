@@ -29,4 +29,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - # Add your email here to receive build notifications
+          - ertascagatay@gmail.com
