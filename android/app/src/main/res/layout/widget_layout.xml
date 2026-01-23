@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:padding="16dp"
+    android:theme="@style/Theme.DeviceDefault.Light">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SIRADAKİ İLAÇ"
+        android:textSize="14sp"
+        android:textColor="#757575"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_med_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Aspirin"
+        android:textSize="24sp"
+        android:textColor="#00509E"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_med_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="09:00"
+        android:textSize="32sp"
+        android:textColor="#D32F2F"
+        android:textStyle="bold" />
+
+</LinearLayout>
