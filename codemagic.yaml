@@ -12,9 +12,26 @@ workflows:
         script: |
           flutter packages pub get
       
-      - name: Regenerate iOS platform files
+      - name: Force regenerate iOS project structure
         script: |
-          flutter create --platforms=ios .
+          # Backup custom iOS files
+          cp ios/Runner/Info.plist /tmp/Info.plist.backup || true
+          cp ios/Runner/MedicationWidget.swift /tmp/MedicationWidget.swift.backup || true
+          cp ios/Podfile /tmp/Podfile.backup || true
+          
+          # Remove entire iOS folder
+          rm -rf ios
+          
+          # Recreate iOS platform from scratch
+          flutter create --org=com.medtracker --platforms=ios .
+          
+          # Restore custom files
+          cp /tmp/Info.plist.backup ios/Runner/Info.plist || true
+          cp /tmp/MedicationWidget.swift.backup ios/Runner/MedicationWidget.swift || true
+          cp /tmp/Podfile.backup ios/Podfile || true
+          
+          # Verify xcodeproj was created
+          ls -la ios/Runner.xcodeproj || (echo "ERROR: Runner.xcodeproj not created!" && exit 1)
       
       - name: Install CocoaPods dependencies
         script: |
