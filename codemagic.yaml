@@ -39,6 +39,8 @@ workflows:
       
       - name: Build iOS Simulator (Debug, No Codesign)
         script: |
+          export EXCLUDED_ARCHS=x86_64
+          export ONLY_ACTIVE_ARCH=YES
           flutter build ios --debug --no-codesign --simulator
       
       - name: Zip .app bundle for Appetize
