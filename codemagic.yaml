@@ -25,9 +25,18 @@ workflows:
           echo "Checking imports in main.dart..."
           grep -n "import.*theme" lib/main.dart || true
       
+      - name: Ensure iOS project structure exists
+        script: |
+          # Don't delete iOS folder - just ensure xcodeproj exists
+          # This adds missing files but preserves GeneratedPluginRegistrant.m
+          flutter create --org=com.medtracker --platforms=ios .
+          
+          # Verify xcodeproj was created
+          ls -la ios/Runner.xcodeproj || (echo "ERROR: Runner.xcodeproj not created!" && exit 1)
+      
       - name: Clean iOS build artifacts
         script: |
-          # Don't delete iOS folder - just clean build artifacts
+          # Clean build artifacts but keep plugin files
           cd ios
           rm -rf build/
           rm -rf Pods/
