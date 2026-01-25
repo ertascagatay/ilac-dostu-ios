@@ -1,12 +1,73 @@
 workflows:
-  ios-simulator-appetize:
-    name: iOS Simulator Build for Appetize
+  # Web Testing Workflow
+  web-testing:
+    name: Web Build and Test
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      node: latest
+    
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
+      
+    scripts:
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+      
+      - name: Run Flutter analyze
+        script: |
+          flutter analyze
+      
+      - name: Run unit tests
+        script: |
+          flutter test --coverage
+      
+      - name: Build web release
+        script: |
+          flutter build web --release
+      
+      - name: Run integration tests
+        script: |
+          flutter test integration_test/
+      
+    artifacts:
+      - build/web/**
+      - coverage/**
+    
+    publishing:
+      email:
+        recipients:
+          - ertascagatay@gmail.com
+      
+  # iOS Simulator Testing Workflow  
+  ios-simulator-testing:
+    name: iOS Simulator Build and Test
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
+    
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+        - pattern: 'develop'
+          include: true
+          source: true
     scripts:
       - name: Get Flutter packages
         script: |
@@ -18,25 +79,38 @@ workflows:
           rm -rf build/
           rm -rf .dart_tool/
       
-      - name: Verify iOS project structure
+      - name: Ensure iOS project structure
         script: |
-          # Verify iOS project exists (should be committed in repo)
+          # Check if Runner.xcodeproj exists
           if [ ! -d "ios/Runner.xcodeproj" ]; then
-            echo "ERROR: ios/Runner.xcodeproj not found!"
-            echo "The iOS project should be committed to your repository."
-            exit 1
+            echo "Runner.xcodeproj not found, generating iOS project..."
+            
+            # Generate iOS project structure
+            flutter create --org=com.medtracker --platforms=ios .
+            
+            # CRITICAL: Regenerate plugin registration immediately
+            echo "Regenerating plugin registration..."
+            flutter pub get
+            
+            # Verify Firebase plugins are registered
+            if grep -q "cloud_firestore" ios/Runner/GeneratedPluginRegistrant.m; then
+              echo "✓ cloud_firestore plugin registered successfully"
+            else
+              echo "ERROR: cloud_firestore not registered after flutter create!"
+              exit 1
+            fi
+          else
+            echo "✓ Runner.xcodeproj exists"
           fi
-          echo "✓ iOS project structure exists"
       
       - name: Verify plugin registration
         script: |
-          # Verify GeneratedPluginRegistrant has Firebase imports
-          echo "Checking GeneratedPluginRegistrant.m for Firebase plugins..."
+          # Double-check GeneratedPluginRegistrant has Firebase imports
+          echo "Verifying GeneratedPluginRegistrant.m..."
           if grep -q "cloud_firestore" ios/Runner/GeneratedPluginRegistrant.m; then
             echo "✓ cloud_firestore plugin registered"
           else
-            echo "WARNING: cloud_firestore not found in GeneratedPluginRegistrant.m"
-            echo "This may cause build failures. Running flutter pub get to regenerate..."
+            echo "WARNING: cloud_firestore not found, regenerating..."
             flutter pub get
           fi
       
@@ -57,16 +131,70 @@ workflows:
           pod install --repo-update
           cd ..
       
-      - name: Build iOS Simulator (Debug, No Codesign)
+      - name: Install CocoaPods dependencies
         script: |
-          export EXCLUDED_ARCHS=x86_64
-          export ONLY_ACTIVE_ARCH=YES
-          flutter build ios --debug --no-codesign --simulator
+          cd ios
+          # Install pods with repo update for latest versions
+          pod install --repo-update
+          cd ..
       
-      - name: Zip .app bundle for Appetize
+    artifacts:
+      - build/ios/iphonesimulator/Runner.app.zip
+      - coverage/**
+    
+    publishing:
+      email:
+        recipients:
+          - ertascagatay@gmail.com
+  
+  # Android Testing Workflow
+  android-testing:
+    name: Android Build and Test
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      java: 11
+      
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
+      
+    scripts:
+      - name: Flutter pub get
         script: |
-          cd build/ios/iphonesimulator
-          zip -r Runner.app.zip Runner.app
+          flutter pub get
+      
+      - name: Run Flutter analyze
+        script: |
+          flutter analyze
+      
+      - name: Run unit tests
+        script: |
+          flutter test --coverage
+      
+      - name: Build Android APK
+        script: |
+          flutter build apk --debug
+      
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release
+      
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/**/*.aab
+      - coverage/**
+    
+    publishing:
+      email:
+        recipients:
+          - ertascagatay@gmail.com
     artifacts:
       - build/ios/iphonesimulator/Runner.app.zip
     publishing:
