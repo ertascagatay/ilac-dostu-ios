@@ -12,6 +12,19 @@ workflows:
         script: |
           flutter packages pub get
       
+      - name: Clean build artifacts
+        script: |
+          flutter clean
+          rm -rf build/
+          rm -rf .dart_tool/
+      
+      - name: Verify lib structure
+        script: |
+          echo "Checking lib/theme directory..."
+          ls -la lib/theme/
+          echo "Checking imports in main.dart..."
+          grep -n "import.*theme" lib/main.dart || true
+      
       - name: Force regenerate iOS project structure
         script: |
           # Backup custom iOS files
@@ -32,6 +45,11 @@ workflows:
           
           # Verify xcodeproj was created
           ls -la ios/Runner.xcodeproj || (echo "ERROR: Runner.xcodeproj not created!" && exit 1)
+      
+      - name: Refresh packages after iOS regeneration
+        script: |
+          flutter pub get
+          flutter pub upgrade
       
       - name: Install CocoaPods dependencies
         script: |
