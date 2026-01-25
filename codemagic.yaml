@@ -31,8 +31,17 @@ workflows:
           # This adds missing files but preserves GeneratedPluginRegistrant.m
           flutter create --org=com.medtracker --platforms=ios .
           
+          # CRITICAL: Immediately regenerate plugin registrant 
+          # flutter create may have corrupted it
+          flutter pub get
+          flutter pub upgrade
+          
           # Verify xcodeproj was created
           ls -la ios/Runner.xcodeproj || (echo "ERROR: Runner.xcodeproj not created!" && exit 1)
+          
+          # Verify GeneratedPluginRegistrant has firebase imports
+          echo "Checking GeneratedPluginRegistrant.m for firebase imports..."
+          grep -i "firebase\|firestore" ios/Runner/GeneratedPluginRegistrant.m || echo "WARNING: Firebase imports missing!"
       
       - name: Clean iOS build artifacts
         script: |
@@ -46,8 +55,8 @@ workflows:
       
       - name: Refresh packages after iOS regeneration
         script: |
+          # One more pub get to be sure
           flutter pub get
-          flutter pub upgrade
       
       - name: Install CocoaPods dependencies
         script: |
