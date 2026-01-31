@@ -8,15 +8,23 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Clean previous builds
+        script: |
+          cd ilac_dostu
+          flutter clean
+          cd ios
+          rm -rf Pods Podfile.lock .symlinks
+          cd ../..
+      
       - name: Get Flutter packages
         script: |
           cd ilac_dostu
-          flutter packages pub get
+          flutter pub get
       
       - name: Install CocoaPods dependencies
         script: |
           cd ilac_dostu/ios
-          pod install
+          pod install --repo-update
       
       - name: Build iOS Simulator app
         script: |
