@@ -1,0 +1,32 @@
+workflows:
+  ios-simulator-build:
+    name: iOS Simulator Build for Appetize
+    instance_type: mac_mini_m1
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          cd ilac_dostu
+          flutter packages pub get
+      
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ilac_dostu/ios
+          pod install
+      
+      - name: Build iOS Simulator app
+        script: |
+          cd ilac_dostu
+          flutter build ios --debug --no-codesign --simulator
+      
+      - name: Package for Appetize
+        script: |
+          cd ilac_dostu/build/ios/iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent Runner.app Runner.zip
+    
+    artifacts:
+      - ilac_dostu/build/ios/iphonesimulator/Runner.zip
