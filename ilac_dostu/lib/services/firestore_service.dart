@@ -7,13 +7,11 @@ import '../models/medication_log.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Generate unique 6-digit patient code
-  Future&lt;String&gt; generatePatientCode() async {
+  Future<String> generatePatientCode() async {
     final random = Random();
     String code;
     bool exists = true;
 
-    // Keep generating until we find a unique code
     while (exists) {
       code = (100000 + random.nextInt(900000)).toString();
       final doc = await _db.collection('users').doc(code).get();
@@ -23,13 +21,11 @@ class FirestoreService {
     return '';
   }
 
-  // Create a new user (Patient or Caregiver)
-  Future&lt;void&gt; createUser(AppUser user) async {
+  Future<void> createUser(AppUser user) async {
     await _db.collection('users').doc(user.uid).set(user.toMap());
   }
 
-  // Get user by UID
-  Future&lt;AppUser?&gt; getUser(String uid) async {
+  Future<AppUser?> getUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     if (doc.exists) {
       return AppUser.fromMap(doc.data()!);
@@ -37,29 +33,25 @@ class FirestoreService {
     return null;
   }
 
-  // Link patient to caregiver (Pairing Logic)
-  Future&lt;bool&gt; linkPatientToCaregiver({
+  Future<bool> linkPatientToCaregiver({
     required String patientCode,
     required String caregiverUid,
   }) async {
     try {
-      // Check if patient exists
       final patientDoc = await _db.collection('users').doc(patientCode).get();
       if (!patientDoc.exists) {
-        return false; // Patient code not found
+        return false;
       }
 
       final patientData = patientDoc.data()!;
       if (patientData['role'] != 'patient') {
-        return false; // Not a patient
+        return false;
       }
 
-      // Add caregiver to patient's caregiverIds
       await _db.collection('users').doc(patientCode).update({
         'caregiverIds': FieldValue.arrayUnion([caregiverUid]),
       });
 
-      // Add patient to caregiver's patientIds
       await _db.collection('users').doc(caregiverUid).update({
         'patientIds': FieldValue.arrayUnion([patientCode]),
       });
@@ -71,8 +63,7 @@ class FirestoreService {
     }
   }
 
-  // Get medications stream for real-time updates
-  Stream&lt;List&lt;MedicationModel&gt;&gt; getMedicationsStream(String patientUid) {
+  Stream<List<MedicationModel>> getMedicationsStream(String patientUid) {
     return _db
         .collection('users')
         .doc(patientUid)
@@ -81,13 +72,12 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
-          .map((doc) =&gt; MedicationModel.fromMap(doc.id, doc.data()))
+          .map((doc) => MedicationModel.fromMap(doc.id, doc.data()))
           .toList();
     });
   }
 
-  // Add medication
-  Future&lt;String&gt; addMedication({
+  Future<String> addMedication({
     required String patientUid,
     required MedicationModel medication,
   }) async {
@@ -99,11 +89,10 @@ class FirestoreService {
     return docRef.id;
   }
 
-  // Update medication
-  Future&lt;void&gt; updateMedication({
+  Future<void> updateMedication({
     required String patientUid,
     required String medicationId,
-    required Map&lt;String, dynamic&gt; updates,
+    required Map<String, dynamic> updates,
   }) async {
     await _db
         .collection('users')
@@ -113,8 +102,7 @@ class FirestoreService {
         .update(updates);
   }
 
-  // Delete medication
-  Future&lt;void&gt; deleteMedication({
+  Future<void> deleteMedication({
     required String patientUid,
     required String medicationId,
   }) async {
@@ -126,8 +114,7 @@ class FirestoreService {
         .delete();
   }
 
-  // Log medication taken
-  Future&lt;void&gt; logMedicationTaken({
+  Future<void> logMedicationTaken({
     required String patientUid,
     required MedicationModel medication,
   }) async {
@@ -145,8 +132,7 @@ class FirestoreService {
         .add(log.toMap());
   }
 
-  // Get medication logs stream
-  Stream&lt;List&lt;MedicationLog&gt;&gt; getLogsStream(String patientUid) {
+  Stream<List<MedicationLog>> getLogsStream(String patientUid) {
     return _db
         .collection('users')
         .doc(patientUid)
@@ -156,18 +142,17 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
-          .map((doc) =&gt; MedicationLog.fromMap(doc.id, doc.data()))
+          .map((doc) => MedicationLog.fromMap(doc.id, doc.data()))
           .toList();
     });
   }
 
-  // Get caregiver's patients
-  Future&lt;List&lt;AppUser&gt;&gt; getCaregiverPatients(String caregiverUid) async {
+  Future<List<AppUser>> getCaregiverPatients(String caregiverUid) async {
     final caregiverDoc = await _db.collection('users').doc(caregiverUid).get();
     if (!caregiverDoc.exists) return [];
 
-    final patientIds = List&lt;String&gt;.from(caregiverDoc.data()!['patientIds'] ?? []);
-    final List&lt;AppUser&gt; patients = [];
+    final patientIds = List<String>.from(caregiverDoc.data()!['patientIds'] ?? []);
+    final List<AppUser> patients = [];
 
     for (final patientId in patientIds) {
       final patient = await getUser(patientId);

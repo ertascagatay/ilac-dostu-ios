@@ -12,10 +12,10 @@ class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key, required this.patientUid});
 
   @override
-  State&lt;PatientHomeScreen&gt; createState() =&gt; _PatientHomeScreenState();
+  State<PatientHomeScreen> createState() => _PatientHomeScreenState();
 }
 
-class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
+class _PatientHomeScreenState extends State<PatientHomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FlutterTts _flutterTts = FlutterTts();
 
@@ -25,11 +25,11 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
     _initTts();
   }
 
-  Future&lt;void&gt; _initTts() async {
+  Future<void> _initTts() async {
     await _flutterTts.setLanguage("tr-TR");
   }
 
-  Future&lt;void&gt; _speak(String text) async {
+  Future<void> _speak(String text) async {
     await _flutterTts.speak(text);
   }
 
@@ -39,7 +39,6 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
     final newIsTaken = !med.isTaken;
     final newStockCount = newIsTaken ? med.stockCount - 1 : med.stockCount + 1;
 
-    // Update in Firestore
     await _firestoreService.updateMedication(
       patientUid: widget.patientUid,
       medicationId: med.id!,
@@ -50,7 +49,6 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
     );
 
     if (newIsTaken) {
-      // Log the medication
       await _firestoreService.logMedicationTaken(
         patientUid: widget.patientUid,
         medication: med.copyWith(stockCount: newStockCount),
@@ -93,7 +91,7 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
-      builder: (ctx) =&gt; _AddMedicationSheet(
+      builder: (ctx) => _AddMedicationSheet(
         onSave: (name, timeOfDay, imagePath, stock) async {
           final medication = MedicationModel(
             name: name,
@@ -117,7 +115,7 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
 
     showDialog(
       context: context,
-      builder: (ctx) =&gt; AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Silme Onayı', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         content: Text(
           '${med.name} adlı ilacı silmek istiyor musunuz?',
@@ -125,7 +123,7 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
         ),
         actions: [
           TextButton(
-            onPressed: () =&gt; Navigator.of(ctx).pop(),
+            onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('HAYIR', style: TextStyle(fontSize: 24, color: Colors.grey)),
           ),
           TextButton(
@@ -153,7 +151,6 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
       ),
       body: Column(
         children: [
-          // Patient Code Display
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -205,10 +202,8 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
               ],
             ),
           ),
-
-          // Medications List
           Expanded(
-            child: StreamBuilder&lt;List&lt;MedicationModel&gt;&gt;(
+            child: StreamBuilder<List<MedicationModel>>(
               stream: _firestoreService.getMedicationsStream(widget.patientUid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -233,27 +228,27 @@ class _PatientHomeScreenState extends State&lt;PatientHomeScreen&gt; {
                   );
                 }
 
-                final morningMeds = medications.where((m) =&gt; m.timeOfDay == TimeOfDayType.morning).toList();
-                final eveningMeds = medications.where((m) =&gt; m.timeOfDay == TimeOfDayType.evening).toList();
+                final morningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.morning).toList();
+                final eveningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.evening).toList();
 
                 return ListView(
                   padding: const EdgeInsets.all(16.0),
                   children: [
                     if (morningMeds.isNotEmpty) ...[ 
                       const _SectionHeader(title: 'Sabah'),
-                      ...morningMeds.map((med) =&gt; _MedicationCard(
+                      ...morningMeds.map((med) => _MedicationCard(
                         medication: med,
-                        onTap: () =&gt; _toggleMedication(med),
-                        onDelete: () =&gt; _deleteMedication(med),
+                        onTap: () => _toggleMedication(med),
+                        onDelete: () => _deleteMedication(med),
                       )),
                     ],
                     const SizedBox(height: 32),
                     if (eveningMeds.isNotEmpty) ...[
                       const _SectionHeader(title: 'Akşam'),
-                      ...eveningMeds.map((med) =&gt; _MedicationCard(
+                      ...eveningMeds.map((med) => _MedicationCard(
                         medication: med,
-                        onTap: () =&gt; _toggleMedication(med),
-                        onDelete: () =&gt; _deleteMedication(med),
+                        onTap: () => _toggleMedication(med),
+                        onDelete: () => _deleteMedication(med),
                       )),
                     ],
                     const SizedBox(height: 100),
@@ -413,20 +408,20 @@ class _MedicationCard extends StatelessWidget {
 class _AddMedicationSheet extends StatefulWidget {
   final Function(String, TimeOfDayType, String?, int) onSave;
 
-  _AddMedicationSheet({required this.onSave});
+  const _AddMedicationSheet({required this.onSave});
 
   @override
-  State&lt;_AddMedicationSheet&gt; createState() =&gt; _AddMedicationSheetState();
+  State<_AddMedicationSheet> createState() => _AddMedicationSheetState();
 }
 
-class _AddMedicationSheetState extends State&lt;_AddMedicationSheet&gt; {
+class _AddMedicationSheetState extends State<_AddMedicationSheet> {
   final _nameController = TextEditingController();
   final _stockController = TextEditingController(text: '30');
   TimeOfDayType _selectedTime = TimeOfDayType.morning;
   String? _imagePath;
   final ImagePicker _picker = ImagePicker();
 
-  Future&lt;void&gt; _pickImage() async {
+  Future<void> _pickImage() async {
     final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
     if (photo != null) {
       setState(() {
@@ -493,7 +488,7 @@ class _AddMedicationSheetState extends State&lt;_AddMedicationSheet&gt; {
                 child: _TimeOptionButton(
                   title: 'Sabah',
                   isSelected: _selectedTime == TimeOfDayType.morning,
-                  onTap: () =&gt; setState(() =&gt; _selectedTime = TimeOfDayType.morning),
+                  onTap: () => setState(() => _selectedTime = TimeOfDayType.morning),
                 ),
               ),
               const SizedBox(width: 16),
@@ -501,7 +496,7 @@ class _AddMedicationSheetState extends State&lt;_AddMedicationSheet&gt; {
                 child: _TimeOptionButton(
                   title: 'Akşam',
                   isSelected: _selectedTime == TimeOfDayType.evening,
-                  onTap: () =&gt; setState(() =&gt; _selectedTime = TimeOfDayType.evening),
+                  onTap: () => setState(() => _selectedTime = TimeOfDayType.evening),
                 ),
               ),
             ],

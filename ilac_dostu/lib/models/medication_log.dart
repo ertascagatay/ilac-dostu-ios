@@ -15,8 +15,7 @@ class MedicationLog {
     required this.stockAfter,
   });
 
-  // Convert to Firestore
-  Map&lt;String, dynamic&gt; toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'medicationId': medicationId,
       'medicationName': medicationName,
@@ -25,8 +24,7 @@ class MedicationLog {
     };
   }
 
-  // Create from Firestore
-  factory MedicationLog.fromMap(String id, Map&lt;String, dynamic&gt; map) {
+  factory MedicationLog.fromMap(String id, Map<String, dynamic> map) {
     return MedicationLog(
       id: id,
       medicationId: map['medicationId'] as String,

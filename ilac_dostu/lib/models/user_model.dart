@@ -6,8 +6,8 @@ class AppUser {
   final String uid;
   final UserRole role;
   final String name;
-  final List&lt;String&gt; caregiverIds; // For patients: list of caregiver UIDs
-  final List&lt;String&gt; patientIds;   // For caregivers: list of patient UIDs
+  final List<String> caregiverIds;
+  final List<String> patientIds;
   final DateTime createdAt;
 
   AppUser({
@@ -19,8 +19,7 @@ class AppUser {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  // Convert to Firestore
-  Map&lt;String, dynamic&gt; toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'uid': uid,
       'role': role == UserRole.patient ? 'patient' : 'caregiver',
@@ -31,15 +30,14 @@ class AppUser {
     };
   }
 
-  // Create from Firestore
-  factory AppUser.fromMap(Map&lt;String, dynamic&gt; map) {
+  factory AppUser.fromMap(Map<String, dynamic> map) {
     return AppUser(
       uid: map['uid'] as String,
       role: map['role'] == 'patient' ? UserRole.patient : UserRole.caregiver,
       name: map['name'] as String,
-      caregiverIds: List&lt;String&gt;.from(map['caregiverIds'] ?? []),
-      patientIds: List&lt;String&gt;.from(map['patientIds'] ?? []),
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      caregiverIds: List<String>.from(map['caregiverIds'] ?? []),
+      patientIds: List<String>.from(map['patientIds'] ?? []),
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
     );
   }
 }

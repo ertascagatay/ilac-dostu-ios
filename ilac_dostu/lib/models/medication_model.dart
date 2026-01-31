@@ -23,8 +23,7 @@ class MedicationModel {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  // Convert to Firestore
-  Map&lt;String, dynamic&gt; toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'time': time,
@@ -36,8 +35,7 @@ class MedicationModel {
     };
   }
 
-  // Create from Firestore
-  factory MedicationModel.fromMap(String id, Map&lt;String, dynamic&gt; map) {
+  factory MedicationModel.fromMap(String id, Map<String, dynamic> map) {
     return MedicationModel(
       id: id,
       name: map['name'] as String,
@@ -52,7 +50,6 @@ class MedicationModel {
     );
   }
 
-  // Create a copy with modifications
   MedicationModel copyWith({
     String? id,
     String? name,

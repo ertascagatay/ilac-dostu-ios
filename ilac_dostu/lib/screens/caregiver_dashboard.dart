@@ -11,12 +11,12 @@ class CaregiverDashboard extends StatefulWidget {
   const CaregiverDashboard({super.key, required this.caregiverUid});
 
   @override
-  State&lt;CaregiverDashboard&gt; createState() =&gt; _CaregiverDashboardState();
+  State<CaregiverDashboard> createState() => _CaregiverDashboardState();
 }
 
-class _CaregiverDashboardState extends State&lt;CaregiverDashboard&gt; {
+class _CaregiverDashboardState extends State<CaregiverDashboard> {
   final FirestoreService _firestoreService = FirestoreService();
-  List&lt;AppUser&gt; _patients = [];
+  List<AppUser> _patients = [];
   bool _isLoading = true;
   String? _selectedPatientUid;
 
@@ -26,8 +26,8 @@ class _CaregiverDashboardState extends State&lt;CaregiverDashboard&gt; {
     _loadPatients();
   }
 
-  Future&lt;void&gt; _loadPatients() async {
-    setState(() =&gt; _isLoading = true);
+  Future<void> _loadPatients() async {
+    setState(() => _isLoading = true);
     final patients = await _firestoreService.getCaregiverPatients(widget.caregiverUid);
     setState(() {
       _patients = patients;
@@ -43,7 +43,7 @@ class _CaregiverDashboardState extends State&lt;CaregiverDashboard&gt; {
 
     showDialog(
       context: context,
-      builder: (ctx) =&gt; AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Hasta Ekle', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -69,7 +69,7 @@ class _CaregiverDashboardState extends State&lt;CaregiverDashboard&gt; {
         ),
         actions: [
           TextButton(
-            onPressed: () =&gt; Navigator.of(ctx).pop(),
+            onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('İPTAL', style: TextStyle(fontSize: 20, color: Colors.grey)),
           ),
           ElevatedButton(
@@ -154,12 +154,11 @@ class _CaregiverDashboardState extends State&lt;CaregiverDashboard&gt; {
                 )
               : Column(
                   children: [
-                    // Patient Selector
-                    if (_patients.length &gt; 1)
+                    if (_patients.length > 1)
                       Container(
                         padding: const EdgeInsets.all(16),
                         color: Colors.green.shade50,
-                        child: DropdownButton&lt;String&gt;(
+                        child: DropdownButton<String>(
                           value: _selectedPatientUid,
                           isExpanded: true,
                           style: const TextStyle(fontSize: 24, color: Colors.black),
@@ -170,12 +169,10 @@ class _CaregiverDashboardState extends State&lt;CaregiverDashboard&gt; {
                             );
                           }).toList(),
                           onChanged: (value) {
-                            setState(() =&gt; _selectedPatientUid = value);
+                            setState(() => _selectedPatientUid = value);
                           },
                         ),
                       ),
-
-                    // Real-Time Medication Monitor
                     Expanded(
                       child: _selectedPatientUid != null
                           ? _PatientMonitor(patientUid: _selectedPatientUid!)
@@ -216,8 +213,7 @@ class _PatientMonitor extends StatelessWidget {
           Expanded(
             child: TabBarView(
               children: [
-                // Medications Tab with StreamBuilder
-                StreamBuilder&lt;List&lt;MedicationModel&gt;&gt;(
+                StreamBuilder<List<MedicationModel>>(
                   stream: firestoreService.getMedicationsStream(patientUid),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -241,28 +237,26 @@ class _PatientMonitor extends StatelessWidget {
                       );
                     }
 
-                    final morningMeds = medications.where((m) =&gt; m.timeOfDay == TimeOfDayType.morning).toList();
-                    final eveningMeds = medications.where((m) =&gt; m.timeOfDay == TimeOfDayType.evening).toList();
+                    final morningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.morning).toList();
+                    final eveningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.evening).toList();
 
                     return ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
                         if (morningMeds.isNotEmpty) ...[
                           const _SectionHeader(title: 'Sabah İlaçları'),
-                          ...morningMeds.map((med) =&gt; _MedicationStatusCard(medication: med)),
+                          ...morningMeds.map((med) => _MedicationStatusCard(medication: med)),
                         ],
                         const SizedBox(height: 24),
                         if (eveningMeds.isNotEmpty) ...[
                           const _SectionHeader(title: 'Akşam İlaçları'),
-                          ...eveningMeds.map((med) =&gt; _MedicationStatusCard(medication: med)),
+                          ...eveningMeds.map((med) => _MedicationStatusCard(medication: med)),
                         ],
                       ],
                     );
                   },
                 ),
-
-                // Logs Tab with StreamBuilder
-                StreamBuilder&lt;List&lt;MedicationLog&gt;&gt;(
+                StreamBuilder<List<MedicationLog>>(
                   stream: firestoreService.getLogsStream(patientUid),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {

@@ -7,10 +7,7 @@ import 'screens/caregiver_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase
   await Firebase.initializeApp();
-  
   runApp(const IlacDostuApp());
 }
 
@@ -46,39 +43,37 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State&lt;SplashScreen&gt; createState() =&gt; _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State&lt;SplashScreen&gt; {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
     _checkUserMode();
   }
 
-  Future&lt;void&gt; _checkUserMode() async {
+  Future<void> _checkUserMode() async {
     final prefs = await SharedPreferences.getInstance();
     final userRole = prefs.getString('userRole');
     final userUid = prefs.getString('userUid');
 
-    await Future.delayed(const Duration(seconds: 1)); // Brief splash
+    await Future.delayed(const Duration(seconds: 1));
 
     if (!mounted) return;
 
     if (userRole == null || userUid == null) {
-      // First time user - show mode selection
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) =&gt; const ModeSelectionScreen()),
+        MaterialPageRoute(builder: (context) => const ModeSelectionScreen()),
       );
     } else {
-      // Returning user - go to appropriate screen
       if (userRole == 'patient') {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) =&gt; PatientHomeScreen(patientUid: userUid)),
+          MaterialPageRoute(builder: (context) => PatientHomeScreen(patientUid: userUid)),
         );
       } else {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) =&gt; CaregiverDashboard(caregiverUid: userUid)),
+          MaterialPageRoute(builder: (context) => CaregiverDashboard(caregiverUid: userUid)),
         );
       }
     }

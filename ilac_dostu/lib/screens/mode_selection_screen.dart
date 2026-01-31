@@ -8,7 +8,7 @@ import 'caregiver_dashboard.dart';
 class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key});
 
-  Future&lt;void&gt; _selectMode(BuildContext context, UserRole role) async {
+  Future<void> _selectMode(BuildContext context, UserRole role) async {
     final prefs = await SharedPreferences.getInstance();
     final firestoreService = FirestoreService();
 
@@ -16,16 +16,13 @@ class ModeSelectionScreen extends StatelessWidget {
     String name;
 
     if (role == UserRole.patient) {
-      // Generate 6-digit code for patient
       uid = await firestoreService.generatePatientCode();
       name = 'Patient';
     } else {
-      // Generate random UID for caregiver
       uid = DateTime.now().millisecondsSinceEpoch.toString();
       name = 'Caregiver';
     }
 
-    // Create user in Firestore
     final user = AppUser(
       uid: uid,
       role: role,
@@ -33,16 +30,14 @@ class ModeSelectionScreen extends StatelessWidget {
     );
     await firestoreService.createUser(user);
 
-    // Save mode and UID locally
     await prefs.setString('userRole', role == UserRole.patient ? 'patient' : 'caregiver');
     await prefs.setString('userUid', uid);
 
     if (!context.mounted) return;
 
-    // Navigate to appropriate screen
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) =&gt; role == UserRole.patient
+        builder: (context) => role == UserRole.patient
             ? PatientHomeScreen(patientUid: uid)
             : CaregiverDashboard(caregiverUid: uid),
       ),
@@ -60,7 +55,6 @@ class ModeSelectionScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Title
               Text(
                 'İlaç Dostu',
                 style: TextStyle(
@@ -80,25 +74,20 @@ class ModeSelectionScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 64),
-
-              // Patient Button
               _ModeButton(
                 icon: '👴',
                 title: 'Hasta',
                 subtitle: 'İlaçlarımı takip edeceğim',
                 color: Colors.blue,
-                onTap: () =&gt; _selectMode(context, UserRole.patient),
+                onTap: () => _selectMode(context, UserRole.patient),
               ),
-
               const SizedBox(height: 32),
-
-              // Caregiver Button
               _ModeButton(
                 icon: '🛡️',
                 title: 'Bakıcı',
                 subtitle: 'Hastamı izleyeceğim',
                 color: Colors.green,
-                onTap: () =&gt; _selectMode(context, UserRole.caregiver),
+                onTap: () => _selectMode(context, UserRole.caregiver),
               ),
             ],
           ),
