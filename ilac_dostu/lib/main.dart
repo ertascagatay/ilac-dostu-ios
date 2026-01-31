@@ -7,8 +7,15 @@ import 'screens/caregiver_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const IlacDostuApp());
+  
+  // Try to initialize Firebase with error handling
+  try {
+    await Firebase.initializeApp();
+    runApp(const IlacDostuApp());
+  } catch (e) {
+    // If Firebase fails, show error screen instead of white screen
+    runApp(FirebaseErrorApp(error: e.toString()));
+  }
 }
 
 class IlacDostuApp extends StatelessWidget {
@@ -35,6 +42,78 @@ class IlacDostuApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
+    );
+  }
+}
+
+class FirebaseErrorApp extends StatelessWidget {
+  final String error;
+  
+  const FirebaseErrorApp({super.key, required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Firebase Error',
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.red.shade900,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 100,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Firebase Initialization Error',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    error,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontFamily: 'monospace',
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Please check:\n\n'
+                  '1. GoogleService-Info.plist is in ios/Runner/\n'
+                  '2. google-services.json is in android/app/\n'
+                  '3. Firebase is configured correctly',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white70,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
