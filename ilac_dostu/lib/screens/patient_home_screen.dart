@@ -413,7 +413,7 @@ class _MedicationCard extends StatelessWidget {
 class _AddMedicationSheet extends StatefulWidget {
   final Function(String, TimeOfDayType, String?, int) onSave;
 
-  const _AddMedicationSheet({required this.onSave});
+  _AddMedicationSheet({required this.onSave});
 
   @override
   State&lt;_AddMedicationSheet&gt; createState() =&gt; _AddMedicationSheetState();
