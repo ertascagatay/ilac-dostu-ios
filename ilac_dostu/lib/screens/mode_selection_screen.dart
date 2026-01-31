@@ -60,7 +60,7 @@ class ModeSelectionScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade900,
+                  color: Colors.blue[900],
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -69,7 +69,7 @@ class ModeSelectionScreen extends StatelessWidget {
                 'Bu cihazı kim kullanacak?',
                 style: TextStyle(
                   fontSize: 28,
-                  color: Colors.grey.shade700,
+                  color: Colors.grey[700],
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -119,7 +119,7 @@ class _ModeButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: color.shade50,
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: color, width: 3),
           boxShadow: [
@@ -142,7 +142,7 @@ class _ModeButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
-                color: color.shade900,
+                color: color,
               ),
             ),
             const SizedBox(height: 8),
@@ -150,7 +150,7 @@ class _ModeButton extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontSize: 20,
-                color: color.shade700,
+                color: color.withOpacity(0.8),
               ),
               textAlign: TextAlign.center,
             ),
