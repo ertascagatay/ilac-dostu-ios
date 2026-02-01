@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../models/medication_model.dart';
 import '../models/medication_log.dart';
+import '../models/measurement_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -162,5 +163,71 @@ class FirestoreService {
     }
 
     return patients;
+  }
+
+  // Measurement methods for Health Suite v3.0
+  Future<String> addMeasurement({
+    required String patientUid,
+    required MeasurementModel measurement,
+  }) async {
+    final docRef = await _db
+        .collection('users')
+        .doc(patientUid)
+        .collection('measurements')
+        .add(measurement.toMap());
+    return docRef.id;
+  }
+
+  Stream<List<MeasurementModel>> getMeasurementsStream(String patientUid) {
+    return _db
+        .collection('users')
+        .doc(patientUid)
+        .collection('measurements')
+        .orderBy('timestamp', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => MeasurementModel.fromMap(doc.id, doc.data()))
+          .toList();
+    });
+  }
+
+  Stream<List<MeasurementModel>> getMeasurementsByType({
+    required String patientUid,
+    required MeasurementType type,
+  }) {
+    return _db
+        .collection('users')
+        .doc(patientUid)
+        .collection('measurements')
+        .where('type', isEqualTo: type.toString().split('.').last)
+        .orderBy('timestamp', descending: false)
+        .limit(30)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => MeasurementModel.fromMap(doc.id, doc.data()))
+          .toList();
+    });
+  }
+
+  Future<List<MeasurementModel>> getMeasurementsInRange({
+    required String patientUid,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final snapshot = await _db
+        .collection('users')
+        .doc(patientUid)
+        .collection('measurements')
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+        .orderBy('timestamp', descending: false)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => MeasurementModel.fromMap(doc.id, doc.data()))
+        .toList();
   }
 }
