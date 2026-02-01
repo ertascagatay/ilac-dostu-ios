@@ -48,7 +48,7 @@ class AppTheme {
           color: const Color(0xFF424242),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -136,7 +136,7 @@ class AppTheme {
           color: const Color(0xFF424242),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 3,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
