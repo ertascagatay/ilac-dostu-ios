@@ -230,4 +230,19 @@ class FirestoreService {
         .map((doc) => MeasurementModel.fromMap(doc.id, doc.data()))
         .toList();
   }
+
+  Stream<List<MedicationLog>> getMedicationLogsStream(String patientUid) {
+    return _db
+        .collection('users')
+        .doc(patientUid)
+        .collection('medication_logs')
+        .orderBy('timestamp', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => MedicationLog.fromMap(doc.id, doc.data()))
+          .toList();
+    });
+  }
 }

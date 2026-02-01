@@ -67,17 +67,10 @@ class _BarcodeScannerViewState extends State<BarcodeScannerView> {
                   const Spacer(),
                   IconButton(
                     onPressed: () => cameraController.toggleTorch(),
-                    icon: ValueListenableBuilder(
-                      valueListenable: cameraController.torchState,
-                      builder: (context, state, child) {
-                        return Icon(
-                          state == TorchState.off
-                              ? Icons.flash_off
-                              : Icons.flash_on,
-                          color: Colors.white,
-                          size: 28,
-                        );
-                      },
+                    icon: const Icon(
+                      Icons.flash_on,
+                      color: Colors.white,
+                      size: 28,
                     ),
                   ),
                 ],
