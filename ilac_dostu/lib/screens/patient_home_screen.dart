@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:percent_indicator/percent_indicator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/medication_model.dart';
 import '../services/firestore_service.dart';
 import 'mode_selection_screen.dart';
@@ -20,51 +22,61 @@ class PatientHomeScreen extends StatefulWidget {
 class _PatientHomeScreenState extends State<PatientHomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FlutterTts _flutterTts = FlutterTts();
+  String _userName = '';
+  int _selectedDayIndex = DateTime.now().weekday - 1;
 
   @override
   void initState() {
     super.initState();
     _initTts();
+    _loadUserName();
   }
 
   Future<void> _initTts() async {
     await _flutterTts.setLanguage("tr-TR");
   }
 
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'Kullanıcı';
+    });
+  }
+
   Future<void> _speak(String text) async {
     await _flutterTts.speak(text);
   }
 
-  Future<void> _logout() async {
-    final confirm = await showDialog<bool>(
+  void _showProfileModal() {
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Çıkış Yap'),
-        content: const Text('Hesaptan çıkmak istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E88E5),
-            ),
-            child: const Text('Çıkış Yap'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ProfileModal(
+        patientUid: widget.patientUid,
+        userName: _userName,
+        onLogout: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+          if (!mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const ModeSelectionScreen()),
+            (route) => false,
+          );
+        },
       ),
     );
+  }
 
-    if (confirm == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+  Future<void> _callCaregiver() async {
+    // In a real app, this would call the caregiver's phone number
+    final Uri phoneUri = Uri(scheme: 'tel', path: '112'); // Emergency number as placeholder
+    if (await canLaunchUrl(phoneUri)) {
+      await launchUrl(phoneUri);
+    } else {
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const ModeSelectionScreen()),
-        (route) => false,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Arama yapılamıyor')),
       );
     }
   }
@@ -96,16 +108,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '${med.name} alındı. Kalan: $newStockCount',
-            style: const TextStyle(fontSize: 16),
-          ),
+          content: Text('${med.name} alındı. Kalan: $newStockCount'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 3),
           action: SnackBarAction(
             label: 'GERİ AL',
-            textColor: Colors.yellow,
             onPressed: () async {
               await _firestoreService.updateMedication(
                 patientUid: widget.patientUid,
@@ -176,138 +184,149 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Günaydın';
+    if (hour < 18) return 'İyi Günler';
+    return 'İyi Akşamlar';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 200,
-            floating: false,
-            pinned: true,
-            backgroundColor: const Color(0xFF1E88E5),
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'İlaç Dostu',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E88E5),
+        elevation: 0,
+        title: Text(
+          '${_getGreeting()}, $_userName',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 32),
+            onPressed: _showProfileModal,
+            tooltip: 'Profil',
+          ),
+        ],
+      ),
+      body: StreamBuilder<List<MedicationModel>>(
+        stream: _firestoreService.getMedicationsStream(widget.patientUid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Hata: ${snapshot.error}'));
+          }
+
+          final medications = snapshot.data ?? [];
+          final takenCount = medications.where((m) => m.isTaken).length;
+          final totalCount = medications.length;
+          final adherencePercent = totalCount > 0 ? (takenCount / totalCount) : 0.0;
+
+          if (medications.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.medication_outlined, size: 100, color: Colors.grey[400]),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Henüz ilaç eklenmedi',
+                    style: TextStyle(fontSize: 20, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '+ butonuna basarak ilaç ekleyin',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
               ),
-              background: Container(
+            );
+          }
+
+          final morningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.morning).toList();
+          final eveningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.evening).toList();
+
+          return Column(
+            children: [
+              // Stats & Calendar Section
+              Container(
+                padding: const EdgeInsets.all(20),
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
+                  color: Color(0xFF1E88E5),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
                   ),
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
+                    // Progress Ring
+                    CircularPercentIndicator(
+                      radius: 70,
+                      lineWidth: 12,
+                      percent: adherencePercent,
+                      center: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Benim Kodum:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withOpacity(0.9),
+                            '${(adherencePercent * 100).toInt()}%',
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                widget.patientUid,
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 4,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.copy, color: Colors.white, size: 20),
-                                onPressed: () {
-                                  Clipboard.setData(ClipboardData(text: widget.patientUid));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Kod kopyalandı!')),
-                                  );
-                                },
-                              ),
-                            ],
+                          const Text(
+                            'Uyum',
+                            style: TextStyle(fontSize: 14, color: Colors.white70),
                           ),
                         ],
                       ),
+                      progressColor: Colors.white,
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      circularStrokeCap: CircularStrokeCap.round,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '$takenCount / $totalCount İlaç Alındı',
+                      style: const TextStyle(fontSize: 16, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 20),
+                    // Calendar Strip
+                    _CalendarStrip(
+                      selectedIndex: _selectedDayIndex,
+                      onDaySelected: (index) {
+                        setState(() => _selectedDayIndex = index);
+                      },
                     ),
                   ],
                 ),
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                onPressed: _logout,
-                tooltip: 'Çıkış Yap',
-              ),
-            ],
-          ),
-          StreamBuilder<List<MedicationModel>>(
-            stream: _firestoreService.getMedicationsStream(widget.patientUid),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return SliverFillRemaining(
-                  child: Center(child: Text('Hata: ${snapshot.error}')),
-                );
-              }
-
-              final medications = snapshot.data ?? [];
-
-              if (medications.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.medication_outlined, size: 100, color: Colors.grey[400]),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Henüz ilaç eklenmedi',
-                          style: TextStyle(fontSize: 20, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '+ butonuna basarak ilaç ekleyin',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              final morningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.morning).toList();
-              final eveningMeds = medications.where((m) => m.timeOfDay == TimeOfDayType.evening).toList();
-
-              return SliverPadding(
+              // Emergency Button
+              Padding(
                 padding: const EdgeInsets.all(16),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
+                child: ElevatedButton.icon(
+                  onPressed: _callCaregiver,
+                  icon: const Icon(Icons.phone_in_talk_rounded, size: 24),
+                  label: const Text('Bakıcımı Ara', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF6F61),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: 4,
+                  ),
+                ),
+              ),
+              // Medications List
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
                     if (morningMeds.isNotEmpty) ...[
                       _SectionHeader(title: 'Sabah İlaçları', icon: Icons.wb_sunny_rounded),
                       ...morningMeds.map((med) => _TeslaMedicationCard(
@@ -326,12 +345,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       )),
                     ],
                     const SizedBox(height: 100),
-                  ]),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddMedicationSheet,
@@ -341,6 +360,176 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           'İlaç Ekle',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+      ),
+    );
+  }
+}
+
+class _CalendarStrip extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onDaySelected;
+
+  const _CalendarStrip({
+    required this.selectedIndex,
+    required this.onDaySelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: days.length,
+        itemBuilder: (context, index) {
+          final isSelected = index == selectedIndex;
+          return GestureDetector(
+            onTap: () => onDaySelected(index),
+            child: Container(
+              width: 50,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    days[index],
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? const Color(0xFF1E88E5) : Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF1E88E5) : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProfileModal extends StatelessWidget {
+  final String patientUid;
+  final String userName;
+  final VoidCallback onLogout;
+
+  const _ProfileModal({
+    required this.patientUid,
+    required this.userName,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const CircleAvatar(
+            radius: 50,
+            backgroundColor: Color(0xFF1E88E5),
+            child: Icon(Icons.person_rounded, size: 50, color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            userName,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7FA),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'Eşleştirme Kodum',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      patientUid,
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 4,
+                        color: Color(0xFF1E88E5),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, color: Color(0xFF1E88E5)),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: patientUid));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Kod kopyalandı!')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Bakıcınıza bu kodu verin',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                onLogout();
+              },
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Çıkış Yap', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

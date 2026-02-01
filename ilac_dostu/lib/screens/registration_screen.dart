@@ -203,16 +203,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Username
+                // Display Name / Nickname
                 TextFormField(
                   controller: _usernameController,
                   decoration: const InputDecoration(
-                    labelText: 'Kullanıcı Adı',
-                    prefixIcon: Icon(Icons.alternate_email_rounded),
+                    labelText: 'Görünen Ad / Lakap',
+                    hintText: 'Örn: Ayşe Teyze, Mehmet Amca',
+                    prefixIcon: Icon(Icons.badge_outlined),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Lütfen kullanıcı adı girin';
+                      return 'Lütfen görünen ad girin';
                     }
                     return null;
                   },
