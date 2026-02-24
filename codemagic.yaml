@@ -1,40 +1,23 @@
 workflows:
-  ios-simulator-build:
-    name: iOS Simulator Build for Appetize
+  ios-sideload-build:
+    name: iOS Sideloadly Build
     instance_type: mac_mini_m1
-    max_build_duration: 60
     environment:
       flutter: stable
-      xcode: latest
-      cocoapods: default
     scripts:
-      - name: Clean previous builds
-        script: |
-          cd ilac_dostu
-          flutter clean
-          cd ios
-          rm -rf Pods Podfile.lock .symlinks
-          cd ../..
-      
-      - name: Get Flutter packages
+      - name: Paketleri Indir
         script: |
           cd ilac_dostu
           flutter pub get
-      
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ilac_dostu/ios
-          pod install --repo-update
-      
-      - name: Build iOS Simulator app
+      - name: Imzasiz iOS Derle (Gercek Cihaz Icin)
         script: |
           cd ilac_dostu
-          flutter build ios --debug --no-codesign --simulator
-      
-      - name: Package for Appetize
+          flutter build ios --release --no-codesign
+      - name: Sideloadly Icin IPA Olustur
         script: |
-          cd ilac_dostu/build/ios/iphonesimulator
-          ditto -c -k --sequesterRsrc --keepParent Runner.app Runner.zip
-    
+          cd ilac_dostu/build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload/
+          zip -q -r app.ipa Payload
     artifacts:
-      - ilac_dostu/build/ios/iphonesimulator/Runner.zip
+      - ilac_dostu/build/ios/iphoneos/app.ipa
