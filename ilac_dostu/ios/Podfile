@@ -44,9 +44,6 @@ post_install do |installer|
     
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-      # Fix mobile_scanner arm64 simulator exclusion for Xcode 26+ / Apple Silicon
-      config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
     end
   end
 end
