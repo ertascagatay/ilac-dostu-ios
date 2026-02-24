@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import '../models/user_model.dart';
 import 'register_screen.dart';
 import 'patient_home_screen.dart';
 import 'caregiver_dashboard.dart';
-import '../models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ─── Email Login ──────────────────────────────────────────────
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -48,21 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      if (user.role == UserRole.patient) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => PatientHomeScreen(patientUid: user.uid),
-          ),
-          (route) => false,
-        );
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => CaregiverDashboard(caregiverUid: user.uid),
-          ),
-          (route) => false,
-        );
-      }
+      _navigateToHome(user);
     } on FirebaseAuthException catch (e) {
       String message;
       switch (e.code) {
@@ -86,9 +74,262 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       _showError(message);
     } catch (e) {
-      _showError('Beklenmeyen hata: $e');
+      _showError('Giriş hatası: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ─── Google Sign-In ───────────────────────────────────────────
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final appUser = await _authService.signInWithGoogle();
+
+      if (!mounted) return;
+
+      if (appUser != null) {
+        _navigateToHome(appUser);
+      } else {
+        // New user → ask for role
+        _showRoleSelectionDialog();
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        _showError('Google giriş hatası: $msg');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ─── Apple Sign-In ────────────────────────────────────────────
+
+  Future<void> _signInWithApple() async {
+    setState(() => _isLoading = true);
+    try {
+      final appUser = await _authService.signInWithApple();
+
+      if (!mounted) return;
+
+      if (appUser != null) {
+        _navigateToHome(appUser);
+      } else {
+        // New user → ask for role
+        _showRoleSelectionDialog();
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        _showError('Apple giriş hatası: $msg');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ─── Role Selection for Social Login ──────────────────────────
+
+  void _showRoleSelectionDialog() {
+    final nameController = TextEditingController(
+      text: _authService.currentUser?.displayName ?? '',
+    );
+    UserRole selectedRole = UserRole.patient;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      backgroundColor: PremiumColors.cardWhite,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            24, 20, 24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: PremiumColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Hesabınızı Tamamlayın',
+                style: GoogleFonts.poppins(
+                  fontSize: 22, fontWeight: FontWeight.bold,
+                  color: PremiumColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'İsminizi girin ve rolünüzü seçin.',
+                style: GoogleFonts.inter(
+                  fontSize: 14, color: PremiumColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Name Field
+              TextFormField(
+                controller: nameController,
+                style: GoogleFonts.inter(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: 'Ad Soyad',
+                  prefixIcon: const Icon(Icons.person_outline, color: PremiumColors.pillBlue),
+                  labelStyle: GoogleFonts.inter(color: PremiumColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Role Selector
+              Text(
+                'Rolünüz',
+                style: GoogleFonts.poppins(
+                  fontSize: 16, fontWeight: FontWeight.w600,
+                  color: PremiumColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildRoleOption(
+                      icon: Icons.person,
+                      label: 'Hasta',
+                      isSelected: selectedRole == UserRole.patient,
+                      color: PremiumColors.pillBlue,
+                      onTap: () => setSheetState(() => selectedRole = UserRole.patient),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildRoleOption(
+                      icon: Icons.health_and_safety,
+                      label: 'Bakıcı',
+                      isSelected: selectedRole == UserRole.caregiver,
+                      color: PremiumColors.pillPurple,
+                      onTap: () => setSheetState(() => selectedRole = UserRole.caregiver),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Complete Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    if (name.isEmpty) {
+                      _showError('Lütfen isminizi girin.');
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    setState(() => _isLoading = true);
+                    try {
+                      final appUser = await _authService.completeSocialRegistration(
+                        name: name,
+                        role: selectedRole,
+                      );
+                      if (mounted) _navigateToHome(appUser);
+                    } catch (e) {
+                      if (mounted) _showError('Kayıt hatası: $e');
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: PremiumColors.coralAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Devam Et',
+                    style: GoogleFonts.inter(
+                      fontSize: 17, fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleOption({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : PremiumColors.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : PremiumColors.divider,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 32, color: isSelected ? color : PremiumColors.textTertiary),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 15, fontWeight: FontWeight.w600,
+                color: isSelected ? color : PremiumColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Navigation ───────────────────────────────────────────────
+
+  void _navigateToHome(AppUser user) {
+    if (user.role == UserRole.patient) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => PatientHomeScreen(patientUid: user.uid),
+        ),
+        (route) => false,
+      );
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => CaregiverDashboard(caregiverUid: user.uid),
+        ),
+        (route) => false,
+      );
     }
   }
 
@@ -103,6 +344,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  // ─── Build ────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +477,85 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 28),
+
+                  // ─── Divider ────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: PremiumColors.divider)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'veya',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: PremiumColors.textTertiary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: PremiumColors.divider)),
+                    ],
+                  ),
                   const SizedBox(height: 20),
+
+                  // ─── Google Sign-In Button ──────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _signInWithGoogle,
+                      icon: Image.network(
+                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                        width: 22, height: 22,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.g_mobiledata, size: 28, color: Colors.red,
+                        ),
+                      ),
+                      label: Text(
+                        'Google ile Giriş Yap',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: PremiumColors.textPrimary,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: PremiumColors.divider),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ─── Apple Sign-In Button ───────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _signInWithApple,
+                      icon: const Icon(Icons.apple, size: 26, color: Colors.white),
+                      label: Text(
+                        'Apple ile Giriş Yap',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
                   // Register link
                   Row(
