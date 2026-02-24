@@ -23,6 +23,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final FlutterTts _flutterTts = FlutterTts();
   String _userName = '';
+  DateTime _selectedDate = DateTime.now();
   int _currentNavIndex = 0;
 
   @override
