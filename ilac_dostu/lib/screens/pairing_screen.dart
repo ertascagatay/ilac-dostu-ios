@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firestore_service.dart';
 import '../theme/app_theme.dart';
 import 'caregiver_dashboard.dart';
+import 'login_screen.dart';
 
 class PairingScreen extends StatefulWidget {
   final String caregiverUid;
@@ -21,6 +24,17 @@ class _PairingScreenState extends State<PairingScreen> {
   void dispose() {
     _codeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   Future<void> _pair() async {
@@ -79,6 +93,7 @@ class _PairingScreenState extends State<PairingScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: Text(
           'Hasta Eşleştir',
           style: GoogleFonts.poppins(
@@ -87,6 +102,21 @@ class _PairingScreenState extends State<PairingScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          TextButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
+            label: Text(
+              'Çıkış Yap',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.redAccent,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Center(
         child: SingleChildScrollView(
