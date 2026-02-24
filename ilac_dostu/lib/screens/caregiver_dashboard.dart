@@ -10,6 +10,7 @@ import '../services/pdf_service.dart';
 import '../services/barcode_service.dart';
 import '../widgets/health_charts.dart';
 import '../widgets/barcode_scanner_view.dart';
+import '../theme/app_theme.dart';
 import 'mode_selection_screen.dart';
 
 class CaregiverDashboard extends StatefulWidget {
@@ -25,7 +26,7 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     with SingleTickerProviderStateMixin {
   final FirestoreService _firestoreService = FirestoreService();
   late TabController _tabController;
-  
+
   List<AppUser> _patients = [];
   bool _isLoading = true;
   String? _selectedPatientUid;
@@ -35,6 +36,9 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) setState(() {});
+    });
     _loadCaregiverName();
     _loadPatients();
   }
@@ -73,7 +77,9 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
         context: context,
         barrierDismissible: false,
         builder: (context) => const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: PremiumColors.coralAccent,
+          ),
         ),
       );
 
@@ -85,7 +91,8 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
           .getMedicationLogsStream(_selectedPatientUid!)
           .first;
 
-      final patient = _patients.firstWhere((p) => p.uid == _selectedPatientUid);
+      final patient =
+          _patients.firstWhere((p) => p.uid == _selectedPatientUid);
 
       final pdfFile = await PdfService.generateDoctorReport(
         patientName: patient.name,
@@ -117,8 +124,16 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('İlaç Ekle'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: PremiumColors.cardWhite,
+          title: Text(
+            'İlaç Ekle',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: PremiumColors.textPrimary,
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -127,11 +142,14 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                   controller: nameController,
                   decoration: InputDecoration(
                     labelText: 'İlaç Adı',
+                    labelStyle:
+                        GoogleFonts.inter(color: PremiumColors.textSecondary),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.qr_code_scanner),
+                      icon: const Icon(Icons.qr_code_scanner,
+                          color: PremiumColors.pillBlue),
                       onPressed: () async {
                         final barcode = await Navigator.of(context).push(
                           MaterialPageRoute(
@@ -140,7 +158,8 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                         );
 
                         if (barcode != null) {
-                          final medName = BarcodeService.lookupMedication(barcode);
+                          final medName =
+                              BarcodeService.lookupMedication(barcode);
                           if (medName != null) {
                             nameController.text = medName;
                           } else if (barcode.startsWith('869')) {
@@ -158,8 +177,10 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                   controller: timeController,
                   decoration: InputDecoration(
                     labelText: 'Saat',
+                    labelStyle:
+                        GoogleFonts.inter(color: PremiumColors.textSecondary),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
@@ -168,8 +189,10 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                   value: selectedTimeOfDay,
                   decoration: InputDecoration(
                     labelText: 'Zaman',
+                    labelStyle:
+                        GoogleFonts.inter(color: PremiumColors.textSecondary),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   items: const [
@@ -193,8 +216,10 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                   value: selectedHungerStatus,
                   decoration: InputDecoration(
                     labelText: 'Mide Durumu',
+                    labelStyle:
+                        GoogleFonts.inter(color: PremiumColors.textSecondary),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   items: const [
@@ -223,7 +248,10 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('İptal'),
+              child: Text(
+                'İptal',
+                style: GoogleFonts.inter(color: PremiumColors.textSecondary),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -244,9 +272,13 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                 Navigator.of(ctx).pop();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C63FF),
+                backgroundColor: PremiumColors.coralAccent,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('Ekle'),
+              child: Text('Ekle',
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, color: Colors.white)),
             ),
           ],
         ),
@@ -258,25 +290,36 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: PremiumColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: PremiumColors.coralAccent),
+        ),
       );
     }
 
     if (_patients.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text('Merhaba, $_caregiverName'),
-          backgroundColor: const Color(0xFF6C63FF),
-        ),
+        backgroundColor: PremiumColors.background,
+        appBar: _buildPremiumAppBar(),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.person_add, size: 100, color: Colors.grey[400]),
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: PremiumColors.pillBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: const Icon(Icons.person_add_rounded,
+                    size: 52, color: PremiumColors.pillBlue),
+              ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Henüz hasta eklenmedi',
-                style: TextStyle(fontSize: 20, color: Colors.grey),
+                style: GoogleFonts.inter(
+                    fontSize: 18, color: PremiumColors.textSecondary),
               ),
             ],
           ),
@@ -285,51 +328,94 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF6C63FF),
-        elevation: 0,
-        title: Text(
-          'Bakıcı Paneli',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: _exportPdfReport,
-            tooltip: 'PDF Rapor',
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(icon: Icon(Icons.medication), text: 'İlaçlar'),
-            Tab(icon: Icon(Icons.show_chart), text: 'Sağlık'),
-          ],
-        ),
-      ),
+      backgroundColor: PremiumColors.background,
+      appBar: _buildPremiumAppBar(),
       body: Column(
         children: [
+          // Premium Tab Bar
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            decoration: BoxDecoration(
+              color: PremiumColors.cardWhite,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: PremiumColors.darkNavy,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              labelColor: Colors.white,
+              unselectedLabelColor: PremiumColors.textSecondary,
+              labelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600, fontSize: 14),
+              padding: const EdgeInsets.all(4),
+              tabs: const [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.medication_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text('İlaçlar'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.show_chart_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text('Sağlık'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Patient Selector
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: PremiumColors.cardWhite,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: DropdownButtonFormField<String>(
               value: _selectedPatientUid,
               decoration: InputDecoration(
                 labelText: 'Hasta Seçin',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                labelStyle:
+                    GoogleFonts.inter(color: PremiumColors.textSecondary),
+                border: InputBorder.none,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               ),
               items: _patients.map((patient) {
                 return DropdownMenuItem(
                   value: patient.uid,
-                  child: Text(patient.name),
+                  child: Text(patient.name,
+                      style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w500,
+                          color: PremiumColors.textPrimary)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -353,24 +439,114 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton.extended(
               onPressed: _showAddMedicationDialog,
-              backgroundColor: const Color(0xFF6C63FF),
-              icon: const Icon(Icons.add),
-              label: const Text('İlaç Ekle'),
+              backgroundColor: PremiumColors.coralAccent,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: Text('İlaç Ekle',
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, color: Colors.white)),
             )
           : null,
     );
   }
 
+  PreferredSizeWidget _buildPremiumAppBar() {
+    return AppBar(
+      backgroundColor: PremiumColors.background,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Bakıcı Paneli',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: PremiumColors.textPrimary,
+            ),
+          ),
+          Text(
+            'Merhaba, $_caregiverName 👋',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: PremiumColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: PremiumColors.cardWhite,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.picture_as_pdf_rounded,
+                color: PremiumColors.coralAccent),
+            onPressed: _exportPdfReport,
+            tooltip: 'PDF Rapor',
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            color: PremiumColors.cardWhite,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.logout_rounded,
+                color: PremiumColors.textSecondary),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (!mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (context) => const ModeSelectionScreen()),
+                (route) => false,
+              );
+            },
+            tooltip: 'Çıkış',
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMedicationsTab() {
     if (_selectedPatientUid == null) {
-      return const Center(child: Text('Hasta seçin'));
+      return Center(
+        child: Text('Hasta seçin',
+            style: GoogleFonts.inter(color: PremiumColors.textSecondary)),
+      );
     }
 
     return StreamBuilder<List<MedicationModel>>(
       stream: _firestoreService.getMedicationsStream(_selectedPatientUid!),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child:
+                CircularProgressIndicator(color: PremiumColors.coralAccent),
+          );
         }
 
         final medications = snapshot.data ?? [];
@@ -380,12 +556,21 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.medication_outlined,
-                    size: 100, color: Colors.grey[400]),
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: PremiumColors.pillPurple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: const Icon(Icons.medication_outlined,
+                      size: 48, color: PremiumColors.pillPurple),
+                ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Henüz ilaç eklenmedi',
-                  style: TextStyle(fontSize: 20, color: Colors.grey),
+                  style: GoogleFonts.inter(
+                      fontSize: 16, color: PremiumColors.textSecondary),
                 ),
               ],
             ),
@@ -397,38 +582,80 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
           itemCount: medications.length,
           itemBuilder: (context, index) {
             final med = medications[index];
-            return Card(
+            final borderColor = PremiumColors
+                .pillColors[index % PremiumColors.pillColors.length];
+
+            return Container(
               margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+              decoration: BoxDecoration(
+                color: PremiumColors.cardWhite,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.medication,
-                    color: Color(0xFF6C63FF),
-                  ),
-                ),
-                title: Text(
-                  med.name,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text('${med.time} - ${med.hungerStatusDisplay}'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () async {
-                    if (med.id != null) {
-                      await _firestoreService.deleteMedication(
-                        patientUid: _selectedPatientUid!,
-                        medicationId: med.id!,
-                      );
-                    }
-                  },
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    // Colored left border
+                    Container(
+                      width: 5,
+                      decoration: BoxDecoration(
+                        color: borderColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          bottomLeft: Radius.circular(20),
+                        ),
+                      ),
+                    ),
+                    // Pill icon
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 8, 14),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: borderColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.medication_rounded,
+                            color: borderColor, size: 22),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.only(left: 4, right: 8),
+                        title: Text(
+                          med.name,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            color: PremiumColors.textPrimary,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${med.time} - ${med.hungerStatusDisplay}',
+                          style: GoogleFonts.inter(
+                              color: PremiumColors.textTertiary, fontSize: 13),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded,
+                              color: PremiumColors.coralAccent),
+                          onPressed: () async {
+                            if (med.id != null) {
+                              await _firestoreService.deleteMedication(
+                                patientUid: _selectedPatientUid!,
+                                medicationId: med.id!,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -440,14 +667,20 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
 
   Widget _buildHealthTab() {
     if (_selectedPatientUid == null) {
-      return const Center(child: Text('Hasta seçin'));
+      return Center(
+        child: Text('Hasta seçin',
+            style: GoogleFonts.inter(color: PremiumColors.textSecondary)),
+      );
     }
 
     return StreamBuilder<List<MeasurementModel>>(
       stream: _firestoreService.getMeasurementsStream(_selectedPatientUid!),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child:
+                CircularProgressIndicator(color: PremiumColors.coralAccent),
+          );
         }
 
         final measurements = snapshot.data ?? [];

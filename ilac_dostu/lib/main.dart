@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
 import 'screens/mode_selection_screen.dart';
 import 'screens/patient_home_screen.dart';
@@ -8,7 +9,7 @@ import 'screens/caregiver_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     await Firebase.initializeApp();
     runApp(const IlacDostuApp());
@@ -33,7 +34,7 @@ class IlacDostuApp extends StatelessWidget {
 
 class FirebaseErrorApp extends StatelessWidget {
   final String error;
-  
+
   const FirebaseErrorApp({super.key, required this.error});
 
   @override
@@ -42,7 +43,7 @@ class FirebaseErrorApp extends StatelessWidget {
       title: 'Firebase Error',
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.red.shade900,
+        backgroundColor: const Color(0xFF2D3142),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -50,16 +51,24 @@ class FirebaseErrorApp extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 100,
-                  color: Colors.white,
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: PremiumColors.coralAccent.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline_rounded,
+                    size: 56,
+                    color: PremiumColors.coralAccent,
+                  ),
                 ),
                 const SizedBox(height: 32),
-                const Text(
-                  'Firebase Initialization Error',
-                  style: TextStyle(
-                    fontSize: 32,
+                Text(
+                  'Firebase Bağlantı Hatası',
+                  style: GoogleFonts.poppins(
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -69,28 +78,28 @@ class FirebaseErrorApp extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     error,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontFamily: 'monospace',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.white70,
                     ),
                     textAlign: TextAlign.left,
                   ),
                 ),
                 const SizedBox(height: 32),
-                const Text(
-                  'Please check:\n\n'
-                  '1. GoogleService-Info.plist is in ios/Runner/\n'
-                  '2. google-services.json is in android/app/\n'
-                  '3. Firebase is configured correctly',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
+                Text(
+                  'Kontrol edin:\n\n'
+                  '1. GoogleService-Info.plist → ios/Runner/\n'
+                  '2. google-services.json → android/app/\n'
+                  '3. Firebase yapılandırması doğru mu?',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.white54,
+                    height: 1.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -110,11 +119,30 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _fadeAnim;
+
   @override
   void initState() {
     super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnim = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
+    _animController.forward();
     _checkUserMode();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkUserMode() async {
@@ -122,7 +150,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final userRole = prefs.getString('userRole');
     final userUid = prefs.getString('userUid');
 
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
@@ -133,11 +161,15 @@ class _SplashScreenState extends State<SplashScreen> {
     } else {
       if (userRole == 'patient') {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => PatientHomeScreen(patientUid: userUid)),
+          MaterialPageRoute(
+              builder: (context) =>
+                  PatientHomeScreen(patientUid: userUid)),
         );
       } else {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => CaregiverDashboard(caregiverUid: userUid)),
+          MaterialPageRoute(
+              builder: (context) =>
+                  CaregiverDashboard(caregiverUid: userUid)),
         );
       }
     }
@@ -152,42 +184,59 @@ class _SplashScreenState extends State<SplashScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1E88E5),
-              Color(0xFF1565C0),
+              Color(0xFF2D3142),
+              Color(0xFF3D4260),
             ],
           ),
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
+          child: FadeTransition(
+            opacity: _fadeAnim,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Pill icon in circular container
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: PremiumColors.coralAccent.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.medication_rounded,
+                    size: 64,
+                    color: PremiumColors.coralAccent,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.medication_rounded,
-                  size: 64,
-                  color: Colors.white,
+                const SizedBox(height: 32),
+                Text(
+                  'İlaç Dostu',
+                  style: GoogleFonts.poppins(
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'İlaç Dostu',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                const SizedBox(height: 8),
+                Text(
+                  'Akıllı İlaç Takip Sistemi',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.white54,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            ],
+                const SizedBox(height: 48),
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    color: PremiumColors.coralAccent.withOpacity(0.7),
+                    strokeWidth: 3,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

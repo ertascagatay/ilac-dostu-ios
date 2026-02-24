@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
-import '../services/firestore_service.dart';
 import 'registration_screen.dart';
 
 class ModeSelectionScreen extends StatelessWidget {
