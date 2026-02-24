@@ -49,5 +49,16 @@
 	<string>İlaç fotoğrafı çekmek için kamera erişimi gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>İlaç fotoğraflarını kaydetmek için galeri erişimi gereklidir.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.362910953254-on74jcueobq989ce1srgfb9pkgl6e5pe</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
