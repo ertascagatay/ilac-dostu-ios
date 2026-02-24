@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../models/medication_model.dart';
 import '../models/measurement_model.dart';
@@ -8,7 +7,7 @@ import '../services/firestore_service.dart';
 import '../widgets/daily_medication_card.dart';
 import '../widgets/vital_signs_dialog.dart';
 import '../theme/app_theme.dart';
-import 'mode_selection_screen.dart';
+import 'settings_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   final String patientUid;
@@ -202,14 +201,11 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           // Settings gear
           GestureDetector(
-            onTap: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-              if (!mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
+            onTap: () {
+              Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (context) => const ModeSelectionScreen()),
-                (route) => false,
+                  builder: (_) => SettingsScreen(userUid: widget.patientUid),
+                ),
               );
             },
             child: Container(

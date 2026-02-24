@@ -11,7 +11,8 @@ import '../services/barcode_service.dart';
 import '../widgets/health_charts.dart';
 import '../widgets/barcode_scanner_view.dart';
 import '../theme/app_theme.dart';
-import 'mode_selection_screen.dart';
+import 'settings_screen.dart';
+import 'pairing_screen.dart';
 
 class CaregiverDashboard extends StatefulWidget {
   final String caregiverUid;
@@ -298,33 +299,7 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     }
 
     if (_patients.isEmpty) {
-      return Scaffold(
-        backgroundColor: PremiumColors.background,
-        appBar: _buildPremiumAppBar(),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: PremiumColors.pillBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: const Icon(Icons.person_add_rounded,
-                    size: 52, color: PremiumColors.pillBlue),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Henüz hasta eklenmedi',
-                style: GoogleFonts.inter(
-                    fontSize: 18, color: PremiumColors.textSecondary),
-              ),
-            ],
-          ),
-        ),
-      );
+      return PairingScreen(caregiverUid: widget.caregiverUid);
     }
 
     return Scaffold(
@@ -505,26 +480,23 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 12,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.logout_rounded,
+            icon: const Icon(Icons.settings_rounded,
                 color: PremiumColors.textSecondary),
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-              if (!mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
+            onPressed: () {
+              Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (context) => const ModeSelectionScreen()),
-                (route) => false,
+                  builder: (_) => SettingsScreen(userUid: widget.caregiverUid),
+                ),
               );
             },
-            tooltip: 'Çıkış',
+            tooltip: 'Ayarlar',
           ),
         ),
       ],

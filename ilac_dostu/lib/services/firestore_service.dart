@@ -39,22 +39,16 @@ class FirestoreService {
     required String caregiverUid,
   }) async {
     try {
-      final patientDoc = await _db.collection('users').doc(patientCode).get();
-      if (!patientDoc.exists) {
-        return false;
-      }
+      // Find patient by pairing code
+      final patient = await findPatientByPairingCode(patientCode);
+      if (patient == null) return false;
 
-      final patientData = patientDoc.data()!;
-      if (patientData['role'] != 'patient') {
-        return false;
-      }
-
-      await _db.collection('users').doc(patientCode).update({
+      await _db.collection('users').doc(patient.uid).update({
         'caregiverIds': FieldValue.arrayUnion([caregiverUid]),
       });
 
       await _db.collection('users').doc(caregiverUid).update({
-        'patientIds': FieldValue.arrayUnion([patientCode]),
+        'patientIds': FieldValue.arrayUnion([patient.uid]),
       });
 
       return true;
@@ -62,6 +56,18 @@ class FirestoreService {
       print('Error linking patient to caregiver: $e');
       return false;
     }
+  }
+
+  Future<AppUser?> findPatientByPairingCode(String code) async {
+    final snapshot = await _db
+        .collection('users')
+        .where('pairingCode', isEqualTo: code)
+        .where('role', isEqualTo: 'patient')
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return null;
+    return AppUser.fromMap(snapshot.docs.first.data());
   }
 
   Stream<List<MedicationModel>> getMedicationsStream(String patientUid) {

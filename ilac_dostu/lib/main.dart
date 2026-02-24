@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
-import 'screens/mode_selection_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/patient_home_screen.dart';
 import 'screens/caregiver_dashboard.dart';
 
@@ -55,7 +56,7 @@ class FirebaseErrorApp extends StatelessWidget {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: PremiumColors.coralAccent.withOpacity(0.2),
+                    color: PremiumColors.coralAccent.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -78,7 +79,7 @@ class FirebaseErrorApp extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -136,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeOut,
     );
     _animController.forward();
-    _checkUserMode();
+    _checkAuth();
   }
 
   @override
@@ -145,33 +146,41 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Future<void> _checkUserMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userRole = prefs.getString('userRole');
-    final userUid = prefs.getString('userUid');
-
+  Future<void> _checkAuth() async {
     await Future.delayed(const Duration(seconds: 2));
-
     if (!mounted) return;
 
-    if (userRole == null || userUid == null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const ModeSelectionScreen()),
-      );
-    } else {
+    // Check Firebase Auth first
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      // User is logged in via Firebase Auth
+      final prefs = await SharedPreferences.getInstance();
+      final userRole = prefs.getString('userRole');
+      final userUid = firebaseUser.uid;
+
       if (userRole == 'patient') {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-              builder: (context) =>
-                  PatientHomeScreen(patientUid: userUid)),
+            builder: (_) => PatientHomeScreen(patientUid: userUid),
+          ),
         );
-      } else {
+      } else if (userRole == 'caregiver') {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-              builder: (context) =>
-                  CaregiverDashboard(caregiverUid: userUid)),
+            builder: (_) => CaregiverDashboard(caregiverUid: userUid),
+          ),
+        );
+      } else {
+        // Role not saved, go to login
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
         );
       }
+    } else {
+      // Not logged in → LoginScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
   }
 
@@ -195,12 +204,11 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Pill icon in circular container
                 Container(
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: PremiumColors.coralAccent.withOpacity(0.15),
+                    color: PremiumColors.coralAccent.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -231,7 +239,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 32,
                   height: 32,
                   child: CircularProgressIndicator(
-                    color: PremiumColors.coralAccent.withOpacity(0.7),
+                    color: PremiumColors.coralAccent.withValues(alpha: 0.7),
                     strokeWidth: 3,
                   ),
                 ),
