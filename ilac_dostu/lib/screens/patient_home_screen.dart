@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/medication_model.dart';
 import '../models/measurement_model.dart';
@@ -21,7 +21,7 @@ class PatientHomeScreen extends StatefulWidget {
 
 class _PatientHomeScreenState extends State<PatientHomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
-  final FlutterTts _flutterTts = FlutterTts();
+
   String _userName = '';
   DateTime _selectedDate = DateTime.now();
   int _currentNavIndex = 0;
@@ -29,13 +29,11 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _initTts();
+
     _loadUserName();
   }
 
-  Future<void> _initTts() async {
-    await _flutterTts.setLanguage("tr-TR");
-  }
+
 
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
@@ -44,9 +42,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     });
   }
 
-  Future<void> _speak(String text) async {
-    await _flutterTts.speak(text);
-  }
+
 
   void _toggleMedication(MedicationModel med) async {
     if (med.id == null) return;
@@ -69,7 +65,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         medication: med.copyWith(stockCount: newStockCount),
       );
 
-      _speak("Harika, ${med.name} alındı.");
+
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

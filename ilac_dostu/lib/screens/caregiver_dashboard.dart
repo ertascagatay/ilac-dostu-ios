@@ -549,89 +549,212 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: medications.length,
-          itemBuilder: (context, index) {
-            final med = medications[index];
-            final borderColor = PremiumColors
-                .pillColors[index % PremiumColors.pillColors.length];
+        final takenCount = medications.where((m) => m.isTaken).length;
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: PremiumColors.cardWhite,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+        return Column(
+          children: [
+            // Summary row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded,
+                      color: PremiumColors.greenCheck, size: 20),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$takenCount / ${medications.length} ilaç alındı',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: takenCount == medications.length
+                          ? PremiumColors.greenCheck
+                          : PremiumColors.textSecondary,
+                    ),
                   ),
+                  const Spacer(),
+                  if (takenCount == medications.length)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: PremiumColors.greenCheck.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Tamamlandı ✓',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: PremiumColors.greenCheck,
+                        ),
+                      ),
+                    ),
                 ],
               ),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: [
-                    // Colored left border
-                    Container(
-                      width: 5,
-                      decoration: BoxDecoration(
-                        color: borderColor,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          bottomLeft: Radius.circular(20),
+            ),
+            // Medication list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: medications.length,
+                itemBuilder: (context, index) {
+                  final med = medications[index];
+                  final borderColor = med.isTaken
+                      ? PremiumColors.greenCheck
+                      : PremiumColors
+                          .pillColors[index % PremiumColors.pillColors.length];
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: med.isTaken
+                          ? PremiumColors.greenCheck.withOpacity(0.06)
+                          : PremiumColors.cardWhite,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
+                      ],
                     ),
-                    // Pill icon
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 14, 8, 14),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: borderColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.medication_rounded,
-                            color: borderColor, size: 22),
-                      ),
-                    ),
-                    Expanded(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.only(left: 4, right: 8),
-                        title: Text(
-                          med.name,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            color: PremiumColors.textPrimary,
+                    child: IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          // Colored left border
+                          Container(
+                            width: 5,
+                            decoration: BoxDecoration(
+                              color: borderColor,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                bottomLeft: Radius.circular(20),
+                              ),
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          '${med.time} - ${med.hungerStatusDisplay}',
-                          style: GoogleFonts.inter(
-                              color: PremiumColors.textTertiary, fontSize: 13),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded,
-                              color: PremiumColors.coralAccent),
-                          onPressed: () async {
-                            if (med.id != null) {
-                              await _firestoreService.deleteMedication(
-                                patientUid: _selectedPatientUid!,
-                                medicationId: med.id!,
-                              );
-                            }
-                          },
-                        ),
+                          // Status icon
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 14, 8, 14),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: med.isTaken
+                                    ? PremiumColors.greenCheck.withOpacity(0.15)
+                                    : borderColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                med.isTaken
+                                    ? Icons.check_circle_rounded
+                                    : Icons.medication_rounded,
+                                color: med.isTaken
+                                    ? PremiumColors.greenCheck
+                                    : borderColor,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: ListTile(
+                              contentPadding:
+                                  const EdgeInsets.only(left: 4, right: 8),
+                              title: Text(
+                                med.name,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  color: med.isTaken
+                                      ? PremiumColors.greenCheck
+                                      : PremiumColors.textPrimary,
+                                  decoration: med.isTaken
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                              subtitle: Text(
+                                med.isTaken
+                                    ? '${med.time} · Alındı ✓'
+                                    : '${med.time} - ${med.hungerStatusDisplay}',
+                                style: GoogleFonts.inter(
+                                  color: med.isTaken
+                                      ? PremiumColors.greenCheck
+                                      : PremiumColors.textTertiary,
+                                  fontSize: 13,
+                                  fontWeight: med.isTaken
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Status badge + delete
+                          if (med.isTaken)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color:
+                                      PremiumColors.greenCheck.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Alındı',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: PremiumColors.greenCheck,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: PremiumColors.coralAccent
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Bekliyor',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: PremiumColors.coralAccent,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: PremiumColors.coralAccent,
+                                      size: 20),
+                                  onPressed: () async {
+                                    if (med.id != null) {
+                                      await _firestoreService.deleteMedication(
+                                        patientUid: _selectedPatientUid!,
+                                        medicationId: med.id!,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
