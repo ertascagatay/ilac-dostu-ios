@@ -175,6 +175,35 @@ class AuthService {
     return appUser;
   }
 
+  // ─── Anonymous / Guest Sign-In ─────────────────────────────────
+
+  /// Sign in anonymously as a guest. Creates a full Firestore user doc.
+  Future<AppUser> signInAsGuest({
+    required String name,
+    required UserRole role,
+  }) async {
+    final credential = await _auth.signInAnonymously();
+    final uid = credential.user!.uid;
+
+    String? pairingCode;
+    if (role == UserRole.patient) {
+      pairingCode = await _firestoreService.generatePatientCode();
+    }
+
+    final appUser = AppUser(
+      uid: uid,
+      role: role,
+      name: name,
+      email: null,
+      pairingCode: pairingCode,
+    );
+
+    await _firestoreService.createUser(appUser);
+    await _saveToPrefs(uid: uid, role: role, name: name);
+
+    return appUser;
+  }
+
   // ─── Common ───────────────────────────────────────────────────
 
   /// Sign out

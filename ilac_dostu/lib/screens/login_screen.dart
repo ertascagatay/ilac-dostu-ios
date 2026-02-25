@@ -313,6 +313,153 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ─── Guest Sign-In ─────────────────────────────────────────────
+
+  Future<void> _signInAsGuest() async {
+    // Show role selection bottom sheet for guest users
+    final nameController = TextEditingController(text: 'Misafir');
+    UserRole selectedRole = UserRole.patient;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      backgroundColor: PremiumColors.cardWhite,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            24, 20, 24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: PremiumColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Misafir Olarak Başla',
+                style: GoogleFonts.poppins(
+                  fontSize: 22, fontWeight: FontWeight.bold,
+                  color: PremiumColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'İsminizi girin ve rolünüzü seçin.\nVerileriniz güvende tutulur.',
+                style: GoogleFonts.inter(
+                  fontSize: 14, color: PremiumColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Name Field
+              TextFormField(
+                controller: nameController,
+                style: GoogleFonts.inter(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: 'Ad Soyad',
+                  prefixIcon: const Icon(Icons.person_outline, color: PremiumColors.pillBlue),
+                  labelStyle: GoogleFonts.inter(color: PremiumColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Role Selector
+              Text(
+                'Rolünüz',
+                style: GoogleFonts.poppins(
+                  fontSize: 16, fontWeight: FontWeight.w600,
+                  color: PremiumColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildRoleOption(
+                      icon: Icons.person,
+                      label: 'Hasta',
+                      isSelected: selectedRole == UserRole.patient,
+                      color: PremiumColors.pillBlue,
+                      onTap: () => setSheetState(() => selectedRole = UserRole.patient),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildRoleOption(
+                      icon: Icons.health_and_safety,
+                      label: 'Bakıcı',
+                      isSelected: selectedRole == UserRole.caregiver,
+                      color: PremiumColors.pillPurple,
+                      onTap: () => setSheetState(() => selectedRole = UserRole.caregiver),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Continue Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    if (name.isEmpty) {
+                      _showError('Lütfen isminizi girin.');
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    setState(() => _isLoading = true);
+                    try {
+                      final appUser = await _authService.signInAsGuest(
+                        name: name,
+                        role: selectedRole,
+                      );
+                      if (mounted) _navigateToHome(appUser);
+                    } catch (e) {
+                      if (mounted) _showError('Giriş hatası: $e');
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: Text(
+                    'Başla',
+                    style: GoogleFonts.inter(
+                      fontSize: 17, fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: PremiumColors.greenCheck,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ─── Navigation ───────────────────────────────────────────────
 
   void _navigateToHome(AppUser user) {
@@ -552,6 +699,52 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── Guest Sign-In Button ───────────────────
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          PremiumColors.greenCheck.withValues(alpha: 0.08),
+                          PremiumColors.pillBlue.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: PremiumColors.greenCheck.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _isLoading ? null : _signInAsGuest,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 22,
+                              color: PremiumColors.greenCheck,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Kayıt Olmadan Başla',
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: PremiumColors.greenCheck,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
