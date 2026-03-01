@@ -3,8 +3,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/patient_home_screen.dart';
 import 'screens/caregiver_dashboard.dart';
 
@@ -150,11 +152,27 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    // Check Firebase Auth first
+    final prefs = await SharedPreferences.getInstance();
+
+    // Check if onboarding has been seen
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    if (!hasSeenOnboarding) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+      return;
+    }
+
+    // Check Firebase Auth
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
-      // User is logged in via Firebase Auth
-      final prefs = await SharedPreferences.getInstance();
+      // Request notification permission on first authenticated session
+      final hasRequestedNotif = prefs.getBool('hasRequestedNotification') ?? false;
+      if (!hasRequestedNotif) {
+        await Permission.notification.request();
+        await prefs.setBool('hasRequestedNotification', true);
+      }
+
       final userRole = prefs.getString('userRole');
       final userUid = firebaseUser.uid;
 
@@ -171,7 +189,6 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
       } else {
-        // Role not saved, go to login
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
         );
