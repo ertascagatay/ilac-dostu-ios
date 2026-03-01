@@ -293,9 +293,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     ),
                   ),
                   items: const [
-                    DropdownMenuItem(value: MedicationFrequency.everyday, child: Text('Her gün')),
-                    DropdownMenuItem(value: MedicationFrequency.twiceDaily, child: Text('Günde 2 defa')),
-                    DropdownMenuItem(value: MedicationFrequency.weekly, child: Text('Haftada 1')),
+                    DropdownMenuItem(value: MedicationFrequency.everyday, child: Text('Günde 1 kez (Her gün)')),
+                    DropdownMenuItem(value: MedicationFrequency.twiceDaily, child: Text('Günde 2 kez')),
+                    DropdownMenuItem(value: MedicationFrequency.threeTimesDaily, child: Text('Günde 3 kez')),
+                    DropdownMenuItem(value: MedicationFrequency.fourTimesDaily, child: Text('Günde 4 kez')),
+                    DropdownMenuItem(value: MedicationFrequency.everyOtherDay, child: Text('Gün aşırı (2 günde bir)')),
+                    DropdownMenuItem(value: MedicationFrequency.weekly, child: Text('Haftada 1 kez')),
+                    DropdownMenuItem(value: MedicationFrequency.twiceWeekly, child: Text('Haftada 2 kez')),
+                    DropdownMenuItem(value: MedicationFrequency.monthly, child: Text('Ayda 1 kez')),
+                    DropdownMenuItem(value: MedicationFrequency.asNeeded, child: Text('İhtiyaç halinde')),
                   ],
                   onChanged: (value) {
                     if (value != null) setDialogState(() => selectedFrequency = value);

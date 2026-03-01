@@ -4,7 +4,17 @@ enum TimeOfDayType { morning, evening }
 
 enum HungerStatus { empty, full, neutral }
 
-enum MedicationFrequency { everyday, twiceDaily, weekly }
+enum MedicationFrequency {
+  everyday,        // Günde 1 kez (Her gün)
+  twiceDaily,      // Günde 2 kez
+  threeTimesDaily, // Günde 3 kez
+  fourTimesDaily,  // Günde 4 kez
+  everyOtherDay,   // Gün aşırı (2 günde bir)
+  weekly,          // Haftada 1 kez
+  twiceWeekly,     // Haftada 2 kez
+  monthly,         // Ayda 1 kez
+  asNeeded,        // İhtiyaç halinde
+}
 
 class MedicationModel {
   final String? id;
@@ -65,8 +75,21 @@ class MedicationModel {
     switch (freq) {
       case 'twiceDaily':
         return MedicationFrequency.twiceDaily;
+      case 'threeTimesDaily':
+        return MedicationFrequency.threeTimesDaily;
+      case 'fourTimesDaily':
+        return MedicationFrequency.fourTimesDaily;
+      case 'everyOtherDay':
+        return MedicationFrequency.everyOtherDay;
       case 'weekly':
         return MedicationFrequency.weekly;
+      case 'twiceWeekly':
+        return MedicationFrequency.twiceWeekly;
+      case 'monthly':
+        return MedicationFrequency.monthly;
+      case 'asNeeded':
+        return MedicationFrequency.asNeeded;
+      case 'everyday':
       default:
         return MedicationFrequency.everyday;
     }
@@ -134,11 +157,23 @@ class MedicationModel {
   String get frequencyDisplay {
     switch (frequency) {
       case MedicationFrequency.everyday:
-        return 'Her gün';
+        return 'Günde 1 kez (Her gün)';
       case MedicationFrequency.twiceDaily:
-        return 'Günde 2 defa';
+        return 'Günde 2 kez';
+      case MedicationFrequency.threeTimesDaily:
+        return 'Günde 3 kez';
+      case MedicationFrequency.fourTimesDaily:
+        return 'Günde 4 kez';
+      case MedicationFrequency.everyOtherDay:
+        return 'Gün aşırı (2 günde bir)';
       case MedicationFrequency.weekly:
-        return 'Haftada 1';
+        return 'Haftada 1 kez';
+      case MedicationFrequency.twiceWeekly:
+        return 'Haftada 2 kez';
+      case MedicationFrequency.monthly:
+        return 'Ayda 1 kez';
+      case MedicationFrequency.asNeeded:
+        return 'İhtiyaç halinde';
     }
   }
 }
