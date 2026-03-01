@@ -56,6 +56,8 @@ class DailyMedicationCard extends StatelessWidget {
     final timeLabel = med.time;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      enableFeedback: false,
       onTap: () => onToggleTaken(med),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),

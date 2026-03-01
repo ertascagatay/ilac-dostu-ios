@@ -550,45 +550,161 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
         }
 
         final takenCount = medications.where((m) => m.isTaken).length;
+        final waitingCount = medications.length - takenCount;
+        final progress = medications.isEmpty
+            ? 0.0
+            : takenCount / medications.length;
 
         return Column(
           children: [
-            // Summary row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle_rounded,
-                      color: PremiumColors.greenCheck, size: 20),
-                  const SizedBox(width: 6),
-                  Text(
-                    '$takenCount / ${medications.length} ilaç alındı',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: takenCount == medications.length
-                          ? PremiumColors.greenCheck
-                          : PremiumColors.textSecondary,
-                    ),
+            // Daily Progress Summary Cards
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: PremiumColors.cardWhite,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
                   ),
-                  const Spacer(),
-                  if (takenCount == medications.length)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: PremiumColors.greenCheck.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Tamamlandı ✓',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: PremiumColors.greenCheck,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.today_rounded,
+                          color: PremiumColors.pillBlue, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Bugünkü İlaçlar',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: PremiumColors.textPrimary,
                         ),
                       ),
+                      const Spacer(),
+                      if (takenCount == medications.length)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: PremiumColors.greenCheck.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Tamamlandı ✓',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: PremiumColors.greenCheck,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 8,
+                      backgroundColor: PremiumColors.divider.withOpacity(0.3),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        takenCount == medications.length
+                            ? PremiumColors.greenCheck
+                            : PremiumColors.pillBlue,
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Summary cards row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: PremiumColors.greenCheck.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: PremiumColors.greenCheck.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.check_circle_rounded,
+                                  color: PremiumColors.greenCheck, size: 28),
+                              const SizedBox(height: 8),
+                              Text(
+                                '$takenCount / ${medications.length}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: PremiumColors.greenCheck,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Alındı',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: PremiumColors.greenCheck,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: PremiumColors.coralAccent.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color:
+                                  PremiumColors.coralAccent.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.pending_rounded,
+                                  color: PremiumColors.coralAccent, size: 28),
+                              const SizedBox(height: 8),
+                              Text(
+                                '$waitingCount',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: PremiumColors.coralAccent,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Bekliyor',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: PremiumColors.coralAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
