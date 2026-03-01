@@ -335,6 +335,8 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     );
   }
 
+  int _currentNavIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -353,125 +355,195 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     return Scaffold(
       backgroundColor: PremiumColors.background,
       appBar: _buildPremiumAppBar(),
-      body: Column(
+      body: IndexedStack(
+        index: _currentNavIndex,
         children: [
-          // Premium Tab Bar
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            decoration: BoxDecoration(
-              color: PremiumColors.cardWhite,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
+          // Home Tab 
+          Column(
+            children: [
+              // Patient Selector (Minimalist)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: PremiumColors.background, 
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: PremiumColors.darkNavy,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              labelColor: Colors.white,
-              unselectedLabelColor: PremiumColors.textSecondary,
-              labelStyle: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600, fontSize: 14),
-              padding: const EdgeInsets.all(4),
-              tabs: const [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.medication_rounded, size: 20),
-                      SizedBox(width: 8),
-                      Text('İlaçlar'),
-                    ],
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedPatientUid,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: PremiumColors.textSecondary),
+                    items: _patients.map((patient) {
+                      return DropdownMenuItem(
+                        value: patient.uid,
+                        child: Text(patient.name,
+                            style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: PremiumColors.textPrimary)),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() => _selectedPatientUid = value);
+                    },
                   ),
                 ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.show_chart_rounded, size: 20),
-                      SizedBox(width: 8),
-                      Text('Sağlık'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Patient Selector
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: PremiumColors.cardWhite,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: DropdownButtonFormField<String>(
-              value: _selectedPatientUid,
-              decoration: InputDecoration(
-                labelText: 'Hasta Seçin',
-                labelStyle:
-                    GoogleFonts.inter(color: PremiumColors.textSecondary),
-                border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               ),
-              items: _patients.map((patient) {
-                return DropdownMenuItem(
-                  value: patient.uid,
-                  child: Text(patient.name,
-                      style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w500,
-                          color: PremiumColors.textPrimary)),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() => _selectedPatientUid = value);
-              },
-            ),
-          ),
 
-          // TabBarView
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildMedicationsTab(),
-                _buildHealthTab(),
-              ],
-            ),
+              // Premium Tab Bar (İlaçlar / Sağlık)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: PremiumColors.cardWhite,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: PremiumColors.darkNavy,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: PremiumColors.textSecondary,
+                  labelStyle: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, fontSize: 14),
+                  padding: const EdgeInsets.all(4),
+                  tabs: const [
+                    Tab(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.medication_rounded, size: 20),
+                          SizedBox(width: 8),
+                          Text('İlaçlar'),
+                        ],
+                      ),
+                    ),
+                    Tab(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.show_chart_rounded, size: 20),
+                          SizedBox(width: 8),
+                          Text('Sağlık'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // TabBarView content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildMedicationsTab(),
+                    _buildHealthTab(),
+                  ],
+                ),
+              ),
+            ],
           ),
+          
+          // Settings Tab
+          SettingsScreen(userUid: widget.caregiverUid),
         ],
       ),
-      floatingActionButton: _tabController.index == 0
-          ? FloatingActionButton.extended(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _currentNavIndex == 0 && _tabController.index == 0
+          ? FloatingActionButton(
               onPressed: _showAddMedicationDialog,
               backgroundColor: PremiumColors.coralAccent,
               elevation: 4,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              icon: const Icon(Icons.add_rounded, color: Colors.white),
-              label: Text('İlaç Ekle',
-                  style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600, color: Colors.white)),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
             )
           : null,
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: PremiumColors.cardWhite,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Ana Ekran'),
+              const SizedBox(width: 48), // Space for FAB
+              _buildNavItem(1, Icons.settings_rounded, Icons.settings_outlined, 'Ayarlar'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+      int index, IconData activeIcon, IconData inactiveIcon, String label) {
+    final isSelected = _currentNavIndex == index;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _currentNavIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? PremiumColors.pillBlue.withOpacity(0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                color: isSelected
+                    ? PremiumColors.pillBlue
+                    : PremiumColors.textTertiary,
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? PremiumColors.pillBlue
+                    : PremiumColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -480,73 +552,25 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
       backgroundColor: PremiumColors.background,
       elevation: 0,
       scrolledUnderElevation: 0,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Bakıcı Paneli',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-              color: PremiumColors.textPrimary,
-            ),
-          ),
-          Text(
-            'Merhaba, $_caregiverName 👋',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: PremiumColors.textSecondary,
-            ),
-          ),
-        ],
+      title: Text(
+        'Merhaba, $_caregiverName 👋',
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+          color: PremiumColors.textPrimary,
+        ),
       ),
       actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 8),
-          decoration: BoxDecoration(
-            color: PremiumColors.cardWhite,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
+        if (_currentNavIndex == 0) // Only show PDF on Home tab
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            child: IconButton(
+              icon: const Icon(Icons.picture_as_pdf_rounded,
+                  color: PremiumColors.coralAccent, size: 28),
+              onPressed: _exportPdfReport,
+              tooltip: 'PDF Rapor',
+            ),
           ),
-          child: IconButton(
-            icon: const Icon(Icons.picture_as_pdf_rounded,
-                color: PremiumColors.coralAccent),
-            onPressed: _exportPdfReport,
-            tooltip: 'PDF Rapor',
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.only(right: 12),
-          decoration: BoxDecoration(
-            color: PremiumColors.cardWhite,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.settings_rounded,
-                color: PremiumColors.textSecondary),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(userUid: widget.caregiverUid),
-                ),
-              );
-            },
-            tooltip: 'Ayarlar',
-          ),
-        ),
       ],
     );
   }
