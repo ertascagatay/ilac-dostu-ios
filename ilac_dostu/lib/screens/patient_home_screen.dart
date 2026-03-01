@@ -430,18 +430,14 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: _currentNavIndex == 0
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               onPressed: _showAddMedicationDialog,
               backgroundColor: PremiumColors.coralAccent,
-              foregroundColor: Colors.white,
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              icon: const Icon(Icons.add_rounded, size: 24),
-              label: Text(
-                'İlaç Ekle',
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
             )
           : null,
       bottomNavigationBar: _buildBottomNav(),
@@ -787,27 +783,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Hey, ',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w400,
-                      color: PremiumColors.textPrimary,
-                    ),
-                  ),
-                  TextSpan(
-                    text: _userName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: PremiumColors.textPrimary,
-                    ),
-                  ),
-                  const TextSpan(text: ' 👋', style: TextStyle(fontSize: 20)),
-                ],
+            child: Text(
+              'Merhaba, $_userName 👋',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: PremiumColors.textPrimary,
               ),
             ),
           ),
@@ -941,27 +922,6 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: PremiumColors.textPrimary,
-            ),
-          ),
-          GestureDetector(
-            onTap: _showAddMedicationDialog,
-            child: Row(
-              children: [
-                Text(
-                  'Ekle',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: PremiumColors.coralAccent,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: PremiumColors.coralAccent,
-                  size: 18,
-                ),
-              ],
             ),
           ),
         ],
