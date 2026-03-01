@@ -5,19 +5,41 @@ workflows:
     environment:
       flutter: stable
     scripts:
+      - name: Hafizayi Sil (Deep Clean Cache)
+        script: |
+          cd ilac_dostu
+          flutter clean
+          rm -rf ios/Podfile.lock
+          rm -rf ios/Pods
+          rm -rf ios/.symlinks
       - name: Paketleri Indir
         script: |
           cd ilac_dostu
           flutter pub get
-      - name: Imzasiz iOS Derle (Gercek Cihaz Icin)
+      - name: Flutter Build Hazirla
         script: |
           cd ilac_dostu
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --config-only
+      - name: Imzasiz iOS Derle (Gercek Cihaz Icin)
+        script: |
+          cd ilac_dostu/ios
+          xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -archivePath ../build/ios/archive/Runner.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            archive
       - name: Sideloadly Icin IPA Olustur
         script: |
-          cd ilac_dostu/build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
+          cd ilac_dostu/build/ios/archive
+          mkdir -p Payload
+          cp -r Runner.xcarchive/Products/Applications/Runner.app Payload/
           zip -q -r app.ipa Payload
     artifacts:
-      - ilac_dostu/build/ios/iphoneos/app.ipa
+      - ilac_dostu/build/ios/archive/app.ipa
