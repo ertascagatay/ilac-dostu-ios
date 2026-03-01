@@ -120,6 +120,7 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     final timeController = TextEditingController(text: '09:00');
     TimeOfDayType selectedTimeOfDay = TimeOfDayType.morning;
     HungerStatus selectedHungerStatus = HungerStatus.neutral;
+    MedicationFrequency selectedFrequency = MedicationFrequency.everyday;
 
     showDialog(
       context: context,
@@ -184,6 +185,39 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<MedicationFrequency>(
+                  value: selectedFrequency,
+                  decoration: InputDecoration(
+                    labelText: 'Sıklık',
+                    labelStyle:
+                        GoogleFonts.inter(color: PremiumColors.textSecondary),
+                    prefixIcon: const Icon(Icons.repeat_rounded,
+                        color: PremiumColors.pillPurple),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: MedicationFrequency.everyday,
+                      child: Text('Her gün'),
+                    ),
+                    DropdownMenuItem(
+                      value: MedicationFrequency.twiceDaily,
+                      child: Text('Günde 2 defa'),
+                    ),
+                    DropdownMenuItem(
+                      value: MedicationFrequency.weekly,
+                      child: Text('Haftada 1'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => selectedFrequency = value);
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<TimeOfDayType>(
@@ -258,11 +292,25 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
               onPressed: () async {
                 if (nameController.text.isEmpty) return;
 
+                final timeStr = timeController.text.trim();
+                final parts = timeStr.split(':');
+                final now = DateTime.now();
+                final hour =
+                    int.tryParse(parts.isNotEmpty ? parts[0] : '9') ?? 9;
+                final minute =
+                    int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+                final scheduledTime =
+                    DateTime(now.year, now.month, now.day, hour, minute);
+                final alertTime =
+                    scheduledTime.add(const Duration(minutes: 30));
+
                 final medication = MedicationModel(
                   name: nameController.text,
-                  time: timeController.text,
+                  time: timeStr,
                   timeOfDay: selectedTimeOfDay,
                   hungerStatus: selectedHungerStatus,
+                  frequency: selectedFrequency,
+                  caregiverAlertTime: alertTime,
                 );
 
                 await _firestoreService.addMedication(

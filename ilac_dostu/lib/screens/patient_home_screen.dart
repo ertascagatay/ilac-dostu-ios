@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/medication_model.dart';
 import '../models/measurement_model.dart';
@@ -50,13 +50,20 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     final newIsTaken = !med.isTaken;
     final newStockCount = newIsTaken ? med.stockCount - 1 : med.stockCount + 1;
 
+    final Map<String, dynamic> updates = {
+      'isTaken': newIsTaken,
+      'stockCount': newStockCount,
+    };
+
+    // Cancel caregiver alert when medication is taken
+    if (newIsTaken) {
+      updates['caregiverAlertTime'] = null;
+    }
+
     await _firestoreService.updateMedication(
       patientUid: widget.patientUid,
       medicationId: med.id!,
-      updates: {
-        'isTaken': newIsTaken,
-        'stockCount': newStockCount,
-      },
+      updates: updates,
     );
 
     if (newIsTaken) {
@@ -64,8 +71,6 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         patientUid: widget.patientUid,
         medication: med.copyWith(stockCount: newStockCount),
       );
-
-
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +95,130 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
+  // ─── Notification Prompt ─────────────────────────────────────────
+
+  Future<void> _showNotificationPrompt() async {
+    if (!mounted) return;
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: PremiumColors.cardWhite,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      PremiumColors.pillBlue.withOpacity(0.15),
+                      PremiumColors.pillPurple.withOpacity(0.15),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Icon(
+                  Icons.notifications_active_rounded,
+                  color: PremiumColors.pillBlue,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Bildirimler',
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: PremiumColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Bildirimleri açmak ister misiniz?\nİlaç saatiniz geldiğinde hatırlatma alın.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: PremiumColors.textSecondary,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(
+                          color: PremiumColors.divider.withOpacity(0.5),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Hayır',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: PremiumColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: PremiumColors.pillBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Evet',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result == true) {
+      await Permission.notification.request();
+    }
+  }
+
+  // ─── Caregiver Alert Time Helper ────────────────────────────────
+
+  DateTime _computeAlertTime(String timeStr) {
+    final parts = timeStr.split(':');
+    final now = DateTime.now();
+    final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '9') ?? 9;
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    final scheduledTime = DateTime(now.year, now.month, now.day, hour, minute);
+    return scheduledTime.add(const Duration(minutes: 30));
+  }
+
   // ─── Add Medication Dialog ──────────────────────────────────────
 
   void _showAddMedicationDialog() {
@@ -97,6 +226,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     final timeController = TextEditingController(text: '09:00');
     TimeOfDayType selectedTimeOfDay = TimeOfDayType.morning;
     HungerStatus selectedHungerStatus = HungerStatus.neutral;
+    MedicationFrequency selectedFrequency = MedicationFrequency.everyday;
 
     showDialog(
       context: context,
@@ -150,6 +280,26 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<MedicationFrequency>(
+                  value: selectedFrequency,
+                  decoration: InputDecoration(
+                    labelText: 'Sıklık',
+                    labelStyle: GoogleFonts.inter(color: PremiumColors.textSecondary),
+                    prefixIcon: const Icon(Icons.repeat_rounded, color: PremiumColors.pillPurple),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: MedicationFrequency.everyday, child: Text('Her gün')),
+                    DropdownMenuItem(value: MedicationFrequency.twiceDaily, child: Text('Günde 2 defa')),
+                    DropdownMenuItem(value: MedicationFrequency.weekly, child: Text('Haftada 1')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setDialogState(() => selectedFrequency = value);
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<TimeOfDayType>(
@@ -206,14 +356,19 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 final name = nameController.text.trim();
                 if (name.isEmpty) return;
 
+                final timeStr = timeController.text.trim();
+                final alertTime = _computeAlertTime(timeStr);
+
                 final med = MedicationModel(
                   name: name,
-                  time: timeController.text.trim(),
+                  time: timeStr,
                   timeOfDay: selectedTimeOfDay,
                   hungerStatus: selectedHungerStatus,
+                  frequency: selectedFrequency,
                   isTaken: false,
                   stockCount: 30,
                   createdAt: DateTime.now(),
+                  caregiverAlertTime: alertTime,
                 );
 
                 await _firestoreService.addMedication(
@@ -232,6 +387,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   );
+
+                  // Show notification opt-in prompt
+                  _showNotificationPrompt();
                 }
               },
               style: ElevatedButton.styleFrom(

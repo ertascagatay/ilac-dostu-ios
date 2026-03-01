@@ -4,6 +4,8 @@ enum TimeOfDayType { morning, evening }
 
 enum HungerStatus { empty, full, neutral }
 
+enum MedicationFrequency { everyday, twiceDaily, weekly }
+
 class MedicationModel {
   final String? id;
   final String name;
@@ -13,7 +15,9 @@ class MedicationModel {
   final String? imagePath;
   final int stockCount;
   final HungerStatus hungerStatus;
+  final MedicationFrequency frequency;
   final DateTime createdAt;
+  final DateTime? caregiverAlertTime;
 
   MedicationModel({
     this.id,
@@ -24,6 +28,8 @@ class MedicationModel {
     this.imagePath,
     this.stockCount = 30,
     this.hungerStatus = HungerStatus.neutral,
+    this.frequency = MedicationFrequency.everyday,
+    this.caregiverAlertTime,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -36,7 +42,11 @@ class MedicationModel {
       'imagePath': imagePath,
       'stockCount': stockCount,
       'hungerStatus': hungerStatus.toString().split('.').last,
+      'frequency': frequency.toString().split('.').last,
       'createdAt': Timestamp.fromDate(createdAt),
+      'caregiverAlertTime': caregiverAlertTime != null
+          ? Timestamp.fromDate(caregiverAlertTime!)
+          : null,
     };
   }
 
@@ -48,6 +58,17 @@ class MedicationModel {
         return HungerStatus.full;
       default:
         return HungerStatus.neutral;
+    }
+  }
+
+  static MedicationFrequency _stringToFrequency(String? freq) {
+    switch (freq) {
+      case 'twiceDaily':
+        return MedicationFrequency.twiceDaily;
+      case 'weekly':
+        return MedicationFrequency.weekly;
+      default:
+        return MedicationFrequency.everyday;
     }
   }
 
@@ -63,7 +84,10 @@ class MedicationModel {
       imagePath: map['imagePath'] as String?,
       stockCount: map['stockCount'] as int? ?? 30,
       hungerStatus: _stringToHungerStatus(map['hungerStatus'] as String?),
+      frequency: _stringToFrequency(map['frequency'] as String?),
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      caregiverAlertTime:
+          (map['caregiverAlertTime'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -76,6 +100,9 @@ class MedicationModel {
     String? imagePath,
     int? stockCount,
     HungerStatus? hungerStatus,
+    MedicationFrequency? frequency,
+    DateTime? caregiverAlertTime,
+    bool clearAlertTime = false,
   }) {
     return MedicationModel(
       id: id ?? this.id,
@@ -86,6 +113,9 @@ class MedicationModel {
       imagePath: imagePath ?? this.imagePath,
       stockCount: stockCount ?? this.stockCount,
       hungerStatus: hungerStatus ?? this.hungerStatus,
+      frequency: frequency ?? this.frequency,
+      caregiverAlertTime:
+          clearAlertTime ? null : (caregiverAlertTime ?? this.caregiverAlertTime),
       createdAt: createdAt,
     );
   }
@@ -98,6 +128,17 @@ class MedicationModel {
         return 'Tok';
       case HungerStatus.neutral:
         return '';
+    }
+  }
+
+  String get frequencyDisplay {
+    switch (frequency) {
+      case MedicationFrequency.everyday:
+        return 'Her gün';
+      case MedicationFrequency.twiceDaily:
+        return 'Günde 2 defa';
+      case MedicationFrequency.weekly:
+        return 'Haftada 1';
     }
   }
 }
