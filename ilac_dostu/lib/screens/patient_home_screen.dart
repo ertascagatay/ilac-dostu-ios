@@ -534,13 +534,6 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
-  // ─── Tab 1: Vitals ────────────────────────────────────────────
-
-  Widget _buildVitalsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
   // ─── Shared Widgets ────────────────────────────────────────────
 
   Widget _buildEmptyMedicationsState() {
@@ -715,6 +708,5 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         ),
       ),
     );
-  }
   }
 }
