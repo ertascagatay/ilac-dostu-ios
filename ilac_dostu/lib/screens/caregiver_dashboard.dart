@@ -461,13 +461,8 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
               elevation: 4,
               shape: const CircleBorder(),
               child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+            )
           : null,
-    );
-  }
-
-          ],
-        ),
-      ),
     );
   }
 

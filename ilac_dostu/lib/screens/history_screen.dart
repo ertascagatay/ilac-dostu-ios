@@ -255,7 +255,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                 ),
                 Text(
-                  '${med.dosage} - ${med.time}',
+                  '${med.stockCount} adet - ${med.time}',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: PremiumColors.textSecondary,
