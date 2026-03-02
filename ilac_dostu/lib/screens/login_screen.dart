@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(
                     child: _buildRoleOption(
                       icon: Icons.person,
-                      label: 'Hasta',
+                      label: 'Kendim',
                       isSelected: selectedRole == UserRole.patient,
                       color: PremiumColors.pillBlue,
                       onTap: () => setSheetState(() => selectedRole = UserRole.patient),
@@ -218,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(
                     child: _buildRoleOption(
                       icon: Icons.health_and_safety,
-                      label: 'Bakıcı',
+                      label: 'Yakınım',
                       isSelected: selectedRole == UserRole.caregiver,
                       color: PremiumColors.pillPurple,
                       onTap: () => setSheetState(() => selectedRole = UserRole.caregiver),
@@ -391,7 +391,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(
                     child: _buildRoleOption(
                       icon: Icons.person,
-                      label: 'Hasta',
+                      label: 'Kendim',
                       isSelected: selectedRole == UserRole.patient,
                       color: PremiumColors.pillBlue,
                       onTap: () => setSheetState(() => selectedRole = UserRole.patient),
@@ -401,7 +401,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(
                     child: _buildRoleOption(
                       icon: Icons.health_and_safety,
-                      label: 'Bakıcı',
+                      label: 'Yakınım',
                       isSelected: selectedRole == UserRole.caregiver,
                       color: PremiumColors.pillPurple,
                       onTap: () => setSheetState(() => selectedRole = UserRole.caregiver),

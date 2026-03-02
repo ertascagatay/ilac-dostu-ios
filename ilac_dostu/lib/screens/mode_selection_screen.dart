@@ -83,7 +83,7 @@ class ModeSelectionScreen extends StatelessWidget {
                   // Patient Card
                   _TeslaModeCard(
                     icon: Icons.person_rounded,
-                    title: 'Hasta',
+                    title: 'Kendim için',
                     subtitle: 'İlaçlarımı takip edeceğim',
                     gradient: const LinearGradient(
                       colors: [Color(0xFF1E88E5), Color(0xFF42A5F5)],
@@ -94,8 +94,8 @@ class ModeSelectionScreen extends StatelessWidget {
                   // Caregiver Card
                   _TeslaModeCard(
                     icon: Icons.health_and_safety_rounded,
-                    title: 'Bakıcı',
-                    subtitle: 'Hastamı izleyeceğim',
+                    title: 'Yakınım için',
+                    subtitle: 'Yakınımı izleyeceğim',
                     gradient: const LinearGradient(
                       colors: [Color(0xFF009688), Color(0xFF26A69A)],
                     ),

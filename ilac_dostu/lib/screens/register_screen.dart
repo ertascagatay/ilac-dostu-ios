@@ -211,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: _buildRoleCard(
                           role: UserRole.patient,
                           icon: Icons.person,
-                          label: 'Hasta',
+                          label: 'Kendim için',
                           subtitle: 'İlaçlarımı takip et',
                           color: PremiumColors.pillBlue,
                         ),
@@ -221,8 +221,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: _buildRoleCard(
                           role: UserRole.caregiver,
                           icon: Icons.health_and_safety,
-                          label: 'Bakıcı',
-                          subtitle: 'Hastamı yönet',
+                          label: 'Yakınım için',
+                          subtitle: 'Yakınımı yönet',
                           color: PremiumColors.pillPurple,
                         ),
                       ),

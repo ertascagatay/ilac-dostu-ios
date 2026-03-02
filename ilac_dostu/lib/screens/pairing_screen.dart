@@ -237,6 +237,30 @@ class _PairingScreenState extends State<PairingScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              // Go Back / Cancel Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _logout,
+                  icon: const Icon(Icons.arrow_back, color: PremiumColors.textPrimary),
+                  label: Text(
+                    'Geri Dön',
+                    style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: PremiumColors.textPrimary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    side: BorderSide(color: PremiumColors.divider, width: 1.5),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

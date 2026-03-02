@@ -13,6 +13,8 @@ import '../widgets/barcode_scanner_view.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
 import 'pairing_screen.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class CaregiverDashboard extends StatefulWidget {
   final String caregiverUid;
@@ -563,7 +565,7 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
       actions: [
         if (_currentNavIndex == 0) // Only show PDF on Home tab
           Container(
-            margin: const EdgeInsets.only(right: 16),
+            margin: const EdgeInsets.only(right: 8),
             child: IconButton(
               icon: const Icon(Icons.picture_as_pdf_rounded,
                   color: PremiumColors.coralAccent, size: 28),
@@ -571,6 +573,21 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
               tooltip: 'PDF Rapor',
             ),
           ),
+        IconButton(
+          icon: const Icon(Icons.logout, color: PremiumColors.coralAccent, size: 28),
+          onPressed: () async {
+            final authService = AuthService();
+            await authService.signOut();
+            if (mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            }
+          },
+          tooltip: 'Çıkış Yap',
+        ),
+        const SizedBox(width: 8),
       ],
     );
   }

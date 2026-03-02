@@ -9,6 +9,8 @@ import '../widgets/daily_medication_card.dart';
 import '../widgets/vital_signs_dialog.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   final String patientUid;
@@ -462,7 +464,22 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           return Center(child: Text('Hata: ${snapshot.error}'));
         }
 
-        final medications = snapshot.data ?? [];
+        final rawMedications = snapshot.data ?? [];
+        final medications = rawMedications.where((med) {
+          final start = DateTime(med.createdAt.year, med.createdAt.month, med.createdAt.day);
+          final target = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+          if (target.isBefore(start)) return false;
+
+          final daysDiff = target.difference(start).inDays;
+          switch (med.frequency) {
+            case MedicationFrequency.everyday: return true;
+            case MedicationFrequency.everyOtherDay: return daysDiff % 2 == 0;
+            case MedicationFrequency.weekly: return daysDiff % 7 == 0;
+            case MedicationFrequency.twiceWeekly: return daysDiff % 7 == 0 || daysDiff % 7 == 3;
+            case MedicationFrequency.monthly: return target.day == start.day;
+            default: return true;
+          }
+        }).toList();
 
         return Column(
           children: [
@@ -793,12 +810,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(userUid: widget.patientUid),
-                ),
-              );
+            onTap: () async {
+              final authService = AuthService();
+              await authService.signOut();
+              if (mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
             child: Container(
               width: 40,
@@ -815,8 +835,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 ],
               ),
               child: const Icon(
-                Icons.settings_outlined,
-                color: PremiumColors.textSecondary,
+                Icons.logout,
+                color: PremiumColors.coralAccent,
                 size: 22,
               ),
             ),
