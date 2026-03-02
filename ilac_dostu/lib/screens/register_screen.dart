@@ -6,7 +6,7 @@ import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import 'patient_home_screen.dart';
 import 'caregiver_dashboard.dart';
-
+import 'main_wrapper.dart';
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -47,22 +47,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
-      if (user.role == UserRole.patient) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => PatientHomeScreen(patientUid: user.uid),
-          ),
-          (route) => false,
-        );
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => CaregiverDashboard(caregiverUid: user.uid),
-          ),
-          (route) => false,
-        );
-      }
-    } on FirebaseAuthException catch (e) {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => MainWrapper(userUid: user.uid, role: user.role),
+      ),
+      (route) => false,
+    );
+  } on FirebaseAuthException catch (e) {
       String message;
       switch (e.code) {
         case 'email-already-in-use':

@@ -7,7 +7,7 @@ import '../models/user_model.dart';
 import 'register_screen.dart';
 import 'patient_home_screen.dart';
 import 'caregiver_dashboard.dart';
-
+import 'main_wrapper.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -463,22 +463,13 @@ class _LoginScreenState extends State<LoginScreen> {
   // ─── Navigation ───────────────────────────────────────────────
 
   void _navigateToHome(AppUser user) {
-    if (user.role == UserRole.patient) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => PatientHomeScreen(patientUid: user.uid),
-        ),
-        (route) => false,
-      );
-    } else {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => CaregiverDashboard(caregiverUid: user.uid),
-        ),
-        (route) => false,
-      );
-    }
-  }
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => MainWrapper(userUid: user.uid, role: user.role),
+    ),
+    (route) => false,
+  );
+}
 
   void _showError(String message) {
     if (!mounted) return;

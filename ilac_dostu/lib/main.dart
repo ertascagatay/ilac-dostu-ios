@@ -9,6 +9,8 @@ import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/patient_home_screen.dart';
 import 'screens/caregiver_dashboard.dart';
+import 'screens/main_wrapper.dart';
+import 'models/user_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -176,16 +178,11 @@ class _SplashScreenState extends State<SplashScreen>
       final userRole = prefs.getString('userRole');
       final userUid = firebaseUser.uid;
 
-      if (userRole == 'patient') {
+      if (userRole == 'patient' || userRole == 'caregiver') {
+        final roleEnum = userRole == 'patient' ? UserRole.patient : UserRole.caregiver;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => PatientHomeScreen(patientUid: userUid),
-          ),
-        );
-      } else if (userRole == 'caregiver') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => CaregiverDashboard(caregiverUid: userUid),
+            builder: (_) => MainWrapper(userUid: userUid, role: roleEnum),
           ),
         );
       } else {

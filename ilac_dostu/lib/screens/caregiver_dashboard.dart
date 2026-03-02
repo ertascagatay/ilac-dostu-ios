@@ -357,192 +357,114 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
     return Scaffold(
       backgroundColor: PremiumColors.background,
       appBar: _buildPremiumAppBar(),
-      body: IndexedStack(
-        index: _currentNavIndex,
+      body: Column(
         children: [
-          // Home Tab 
-          Column(
-            children: [
-              // Patient Selector (Minimalist)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: PremiumColors.background, 
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedPatientUid,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: PremiumColors.textSecondary),
-                    items: _patients.map((patient) {
-                      return DropdownMenuItem(
-                        value: patient.uid,
-                        child: Text(patient.name,
-                            style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: PremiumColors.textPrimary)),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _selectedPatientUid = value);
-                    },
-                  ),
-                ),
+          // Patient Selector (Minimalist)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: PremiumColors.background, 
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedPatientUid,
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: PremiumColors.textSecondary),
+                items: _patients.map((patient) {
+                  return DropdownMenuItem(
+                    value: patient.uid,
+                    child: Text(patient.name,
+                        style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: PremiumColors.textPrimary)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => _selectedPatientUid = value);
+                },
               ),
-
-              // Premium Tab Bar (İlaçlar / Sağlık)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: PremiumColors.cardWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: PremiumColors.darkNavy,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: PremiumColors.textSecondary,
-                  labelStyle: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600, fontSize: 14),
-                  padding: const EdgeInsets.all(4),
-                  tabs: const [
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.medication_rounded, size: 20),
-                          SizedBox(width: 8),
-                          Text('İlaçlar'),
-                        ],
-                      ),
-                    ),
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.show_chart_rounded, size: 20),
-                          SizedBox(width: 8),
-                          Text('Sağlık'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // TabBarView content
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildMedicationsTab(),
-                    _buildHealthTab(),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          
-          // Settings Tab
-          SettingsScreen(userUid: widget.caregiverUid),
+
+          // Premium Tab Bar (İlaçlar / Sağlık)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: PremiumColors.cardWhite,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: PremiumColors.darkNavy,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              labelColor: Colors.white,
+              unselectedLabelColor: PremiumColors.textSecondary,
+              labelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600, fontSize: 14),
+              padding: const EdgeInsets.all(4),
+              tabs: const [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.medication_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text('İlaçlar'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.show_chart_rounded, size: 20),
+                      SizedBox(width: 8),
+                      Text('Sağlık'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // TabBarView content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildMedicationsTab(),
+                _buildHealthTab(),
+              ],
+            ),
+          ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _currentNavIndex == 0 && _tabController.index == 0
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: _tabController.index == 0
           ? FloatingActionButton(
               onPressed: _showAddMedicationDialog,
               backgroundColor: PremiumColors.coralAccent,
               elevation: 4,
               shape: const CircleBorder(),
               child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-            )
           : null,
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: PremiumColors.cardWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Ana Ekran'),
-              const SizedBox(width: 48), // Space for FAB
-              _buildNavItem(1, Icons.settings_rounded, Icons.settings_outlined, 'Ayarlar'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-      int index, IconData activeIcon, IconData inactiveIcon, String label) {
-    final isSelected = _currentNavIndex == index;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _currentNavIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? PremiumColors.pillBlue.withOpacity(0.1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isSelected ? activeIcon : inactiveIcon,
-                color: isSelected
-                    ? PremiumColors.pillBlue
-                    : PremiumColors.textTertiary,
-                size: 26,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected
-                    ? PremiumColors.pillBlue
-                    : PremiumColors.textTertiary,
-              ),
-            ),
           ],
         ),
       ),
@@ -563,29 +485,14 @@ class _CaregiverDashboardState extends State<CaregiverDashboard>
         ),
       ),
       actions: [
-        if (_currentNavIndex == 0) // Only show PDF on Home tab
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            child: IconButton(
-              icon: const Icon(Icons.picture_as_pdf_rounded,
-                  color: PremiumColors.coralAccent, size: 28),
-              onPressed: _exportPdfReport,
-              tooltip: 'PDF Rapor',
-            ),
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          child: IconButton(
+            icon: const Icon(Icons.picture_as_pdf_rounded,
+                color: PremiumColors.coralAccent, size: 28),
+            onPressed: _exportPdfReport,
+            tooltip: 'PDF Rapor',
           ),
-        IconButton(
-          icon: const Icon(Icons.logout, color: PremiumColors.coralAccent, size: 28),
-          onPressed: () async {
-            final authService = AuthService();
-            await authService.signOut();
-            if (mounted) {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
-            }
-          },
-          tooltip: 'Çıkış Yap',
         ),
         const SizedBox(width: 8),
       ],

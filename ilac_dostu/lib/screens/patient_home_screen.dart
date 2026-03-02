@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import 'settings_screen.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'package:easy_date_timeline/easy_date_timeline.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   final String patientUid;
@@ -420,29 +421,16 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     return Scaffold(
       backgroundColor: PremiumColors.background,
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentNavIndex,
-          children: [
-            // Tab 0: Home (Medications)
-            _buildHomeTab(),
-            // Tab 1: Vitals (Health)
-            _buildVitalsTab(),
-            // Tab 2: History
-            _buildHistoryTab(),
-          ],
-        ),
+        child: _buildHomeTab(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _currentNavIndex == 0
-          ? FloatingActionButton(
-              onPressed: _showAddMedicationDialog,
-              backgroundColor: PremiumColors.coralAccent,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-            )
-          : null,
-      bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddMedicationDialog,
+        backgroundColor: PremiumColors.coralAccent,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+      ),
     );
   }
 
@@ -553,228 +541,27 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+  // ─── Shared Widgets ────────────────────────────────────────────
+
+  Widget _buildEmptyMedicationsState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Icon(Icons.medication_rounded, size: 64, color: PremiumColors.textSecondary.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(
-            'Sağlık Durumu',
+            'Bugün için ilaç bulunamadı',
             style: GoogleFonts.poppins(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: PremiumColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Ölçüm değerlerinizi kaydedin',
-            style: GoogleFonts.inter(
-              fontSize: 15,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
               color: PremiumColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              _buildVitalButton(
-                icon: Icons.favorite,
-                label: 'Tansiyon',
-                color: PremiumColors.coralAccent,
-                onTap: () => _showVitalSignsDialog(MeasurementType.bloodPressure),
-              ),
-              const SizedBox(width: 12),
-              _buildVitalButton(
-                icon: Icons.water_drop,
-                label: 'Şeker',
-                color: PremiumColors.pillBlue,
-                onTap: () => _showVitalSignsDialog(MeasurementType.bloodSugar),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildVitalButton(
-                icon: Icons.monitor_weight,
-                label: 'Kilo',
-                color: PremiumColors.greenCheck,
-                onTap: () => _showVitalSignsDialog(MeasurementType.weight),
-              ),
-              const SizedBox(width: 12),
-              _buildVitalButton(
-                icon: Icons.favorite_border,
-                label: 'Nabız',
-                color: PremiumColors.pillAmber,
-                onTap: () => _showVitalSignsDialog(MeasurementType.pulse),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
-
-  // ─── Tab 2: History ───────────────────────────────────────────
-
-  Widget _buildHistoryTab() {
-    return StreamBuilder<List<MedicationModel>>(
-      stream: _firestoreService.getMedicationsStream(widget.patientUid),
-      builder: (context, snapshot) {
-        final medications = snapshot.data ?? [];
-        final taken = medications.where((m) => m.isTaken).toList();
-        final notTaken = medications.where((m) => !m.isTaken).toList();
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              Text(
-                'Günlük Özet',
-                style: GoogleFonts.poppins(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: PremiumColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Bugünkü ilaç durumunuz',
-                style: GoogleFonts.inter(fontSize: 15, color: PremiumColors.textSecondary),
-              ),
-              const SizedBox(height: 24),
-
-              // Summary cards
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      label: 'Alındı',
-                      count: taken.length,
-                      total: medications.length,
-                      color: PremiumColors.greenCheck,
-                      icon: Icons.check_circle_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      label: 'Bekliyor',
-                      count: notTaken.length,
-                      total: medications.length,
-                      color: PremiumColors.coralAccent,
-                      icon: Icons.pending_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              if (taken.isNotEmpty) ...[
-                Text(
-                  'Alınan İlaçlar ✓',
-                  style: GoogleFonts.poppins(
-                    fontSize: 17, fontWeight: FontWeight.w600,
-                    color: PremiumColors.greenCheck,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...taken.map((m) => _buildHistoryItem(m, true)),
-                const SizedBox(height: 16),
-              ],
-
-              if (notTaken.isNotEmpty) ...[
-                Text(
-                  'Bekleyen İlaçlar',
-                  style: GoogleFonts.poppins(
-                    fontSize: 17, fontWeight: FontWeight.w600,
-                    color: PremiumColors.coralAccent,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...notTaken.map((m) => _buildHistoryItem(m, false)),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSummaryCard({
-    required String label,
-    required int count,
-    required int total,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 12),
-          Text(
-            '$count / $total',
-            style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: color),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHistoryItem(MedicationModel med, bool isTaken) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: PremiumColors.cardWhite,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isTaken ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isTaken ? PremiumColors.greenCheck : PremiumColors.textTertiary,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              med.name,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: PremiumColors.textPrimary,
-                decoration: isTaken ? TextDecoration.lineThrough : null,
-              ),
-            ),
-          ),
-          Text(
-            med.time,
-            style: GoogleFonts.inter(fontSize: 13, color: PremiumColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── Shared Widgets ────────────────────────────────────────────
 
   Widget _buildGreetingHeader() {
     return Padding(
@@ -804,40 +591,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               'Merhaba, $_userName 👋',
               style: GoogleFonts.poppins(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: PremiumColors.textPrimary,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () async {
-              final authService = AuthService();
-              await authService.signOut();
-              if (mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: PremiumColors.cardWhite,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.logout,
-                color: PremiumColors.coralAccent,
-                size: 22,
               ),
             ),
           ),
@@ -871,61 +626,38 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   Widget _buildCalendarStrip() {
-    final now = DateTime.now();
-    final days = List.generate(5, (i) => now.add(Duration(days: i - 2)));
-    final turkishDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: days.map((day) {
-          final isSelected = day.day == now.day &&
-              day.month == now.month &&
-              day.year == now.year;
-          return GestureDetector(
-            onTap: () {
-              setState(() => _selectedDate = day);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 56,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? PremiumColors.darkNavy
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${day.day}',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? Colors.white
-                          : PremiumColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    turkishDays[day.weekday - 1],
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected
-                          ? Colors.white70
-                          : PremiumColors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: EasyDateTimeLine(
+        initialDate: _selectedDate,
+        onDateChange: (selectedDate) {
+          setState(() => _selectedDate = selectedDate);
+        },
+        locale: "tr_TR",
+        headerProps: const EasyHeaderProps(
+          showHeader: false, 
+        ),
+        dayProps: EasyDayProps(
+          height: 72,
+          width: 56,
+          dayStructure: DayStructure.dayNumDayStr,
+          activeDayStyle: DayStyle(
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(16)),
+              color: PremiumColors.darkNavy,
             ),
-          );
-        }).toList(),
+            dayNumStyle: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            dayStrStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white70),
+          ),
+          inactiveDayStyle: DayStyle(
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(16)),
+              color: Colors.transparent,
+            ),
+            dayNumStyle: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: PremiumColors.textPrimary),
+            dayStrStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: PremiumColors.textTertiary),
+          ),
+        ),
       ),
     );
   }
@@ -984,63 +716,5 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
       ),
     );
   }
-
-  // ─── Bottom Navigation ─────────────────────────────────────────
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: PremiumColors.cardWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.only(top: 8, bottom: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home_rounded, 'Anasayfa', 0),
-          _buildNavItem(Icons.monitor_heart_outlined, 'Sağlık', 1),
-          _buildNavItem(Icons.access_time_rounded, 'Özet', 2),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = _currentNavIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _currentNavIndex = index),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isActive
-                  ? PremiumColors.darkNavy
-                  : PremiumColors.textTertiary,
-              size: 26,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive
-                    ? PremiumColors.darkNavy
-                    : PremiumColors.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

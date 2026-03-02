@@ -107,7 +107,7 @@ class _PairingScreenState extends State<PairingScreen> {
             onPressed: _logout,
             icon: const Icon(Icons.logout, size: 20, color: Colors.redAccent),
             label: Text(
-              'Çıkış Yap',
+              'Geri / Çıkış Yap',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
